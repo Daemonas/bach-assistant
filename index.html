@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<head>
+<title>Bach Assistant</title>
+
+</head>
+<html>
+<body onmousemove="coordinate(event)" onmouseout="mouseouty(event)" onclick="clicky(event)" onmousedown="mousy(event)" onmouseup="mousyup(event)" style="background-color:gray;">
+
+<canvas id="myCanvas" width="550" height="400" style="border:2px solid #000000; padding: 0; margin: auto;display: block;position: absolute;top: 0;bottom: 0;left: 0;right: 0;">
+Your browser does not support the HTML canvas tag.</canvas>
+
+<canvas id="myCanvas2" width="550" height="400" style="border:2px solid #000000;" hidden>
+Your browser does not support the HTML canvas tag.</canvas>
+
+<script>
+function random(XX) {
+	return Math.floor(Math.random()*XX);
+}
+function randomFromArray(arr) {
+	return arr[random(arr.length)];
+}
+function mobileAndTabletCheck() {
+  let check = false;
+  return false;
+  (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+  return check;
+};
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+
+var sound_notes=[];
+var the_volume=0.3;
+var decay_percentage=0.93;
+
+function setupSounds(arr) {
+	for(var i=1;i<=88;i++) {
+		arr["note"+i]=[];
+		arr["note"+i].sA=new Audio("piano/Stage Grand "+i+".mp3");
+		arr["note"+i].sB=new Audio("piano/Stage Grand "+i+".mp3");
+		arr["note"+i].sC=new Audio("piano/Stage Grand "+i+".mp3");
+		arr["note"+i].sD=new Audio("piano/Stage Grand "+i+".mp3");
+		arr["note"+i].sF=arr["note"+i].sA;
+		arr["note"+i].playNote = function() {
+			this.sF.decay=true;
+			if(this.sF==this.sA) {
+				this.sF=this.sB;
+			} else if(this.sF==this.sB) {
+				this.sF=this.sC;
+			} else if(this.sF==this.sC) {
+				this.sF=this.sD;
+			} else if(this.sF==this.sD) {
+				this.sF=this.sA;
+			}
+			this.sF.currentTime=0;
+			this.sF.play();
+			this.sF.volume=the_volume;
+			this.sF.decay=false;
+		}
+		
+	}
+}
+
+setupSounds(sound_notes);
+
+function stopAllNotes() {
+	for(var i=1;i<=88;i++) {
+		sound_notes["note"+i].sF.decay=true;
+	}
+}
+
+var noteEvents=[];
+noteEvents.start=0;
+noteEvents.end=0;
+var currentPlayTime=0;
+var isPlaying=false;
+function orderNotesToEvents(starty) {
+	noteEvents=[];
+	noteEvents.start=starty;
+	noteEvents.pitchList=[];
+	var endy=starty;
+	for(var i=0;i<objects.length;i++) {
+		var notey=objects[i];
+		if(notey!=undefined) {
+			if(notey.isNote==true&&starty<=notey.start) {
+				var timey=notey.start;
+				var pitchy=notey.pitch;
+				if(noteEvents[pitchy]==undefined) {
+					noteEvents[pitchy]=[];
+				}
+				noteEvents[pitchy][timey]="on";
+				if(noteEvents[pitchy][timey+notey.length]!="on") {
+					noteEvents[pitchy][timey+notey.length]="off";
+				}
+				if(notey.start>endy) {
+					endy=notey.start;
+				}
+			}
+		}
+	}
+	noteEvents.end=endy;
+	for(var i=0;i<noteEvents.length;i++) {
+		if(noteEvents[i]!=undefined) {
+			noteEvents.pitchList.push(i);
+			var x="";
+			var t=0;
+			for(var j=starty;j<noteEvents[i].length;j++) {
+				var oby=noteEvents[i][j];
+				if(oby!=undefined) {
+					if(x=="off"&&oby=="off") {
+						noteEvents[i][t]=undefined;
+					}
+					x=oby;
+					t=j;
+				}
+			}
+		}
+	}
+}
+
+var hovered_object=[];
+hovered_object.whenClick=function(){};
+hovered_object.onClick=function(){};
+var dummy_obj=[];
+dummy_obj.whileSelected=function(){};
+var selected_object=dummy_obj;
+var objects=[];
+var imgs=[];
+var canvas = document.getElementById("myCanvas");
+var canvas2 = document.getElementById("myCanvas2");
+var ctx = document.getElementById("myCanvas").getContext("2d");
+var ctx2 = document.getElementById("myCanvas2").getContext("2d");
+var mouseX=0;
+var mouseY=0;
+var cursorObject;
+var isDeletePressed=false;
+var isShiftPressed=false;
+var isSpacePressed=false;
+var isSpacePressedCur=false;
+var ctrlA=false;
+
+document.addEventListener("wheel", function(event) {
+	if(timelineBar!=undefined) {
+		if(timelineBar.is_hover==false) {
+			dragbarH.symbo.Y+=Math.round(event.deltaY/10);
+			dragbarH.scrolly();
+		} else {
+			var goobi=Math.abs(event.deltaY)/event.deltaY;
+			zoom-=goobi;
+			if(zoom<2) {
+				zoom=2;
+			}
+			if(zoom>30) {
+				zoom=30;
+			}
+			dragbarW.symbo.X=(noteScrollX)*((timelineLength-102))/-855+102+goobi;
+			if(dragbarW.symbo.X<102) {
+				dragbarW.symbo.X=102;
+			}
+			noteScrollX=Math.ceil(-855*((this.symbo.X-102)/((timelineLength-102))));
+		}
+	}
+});
+
+document.addEventListener('keydown', function(event) {
+	// Checking for Backspace.
+	if (event.keyCode == 8) {
+		isDeletePressed=true;
+	}
+	// Checking for Delete.
+	if (event.keyCode == 46) {
+		isDeletePressed=true;
+	}
+	// Checking for Shift.
+	if (event.keyCode == 16) {
+		isShiftPressed=true;
+	}
+	//Checking for Space.
+	if(event.keyCode == 32) {
+		if(isSpacePressedCur==false) {
+			isSpacePressed=true;
+		}
+		isSpacePressedCur=true;
+	}
+});
+document.addEventListener('keyup', function(event) {
+	// Checking for Shift.
+	if (event.keyCode == 16) {
+		isShiftPressed=false;
+	}
+	
+	//Checking for space
+	if(event.keyCode == 32) {
+		isSpacePressedCur=false;
+	}
+});
+
+function coordinate(event) {
+	mouseX=event.clientX-canvas.getBoundingClientRect().left;
+    mouseY=event.clientY-canvas.getBoundingClientRect().top;
+}
+
+function clicky(event) {
+	var e=event;
+	var isRightMB=false;
+	if ("which" in e) {
+		isRightMB = e.which == 3;
+	}
+    else if ("button" in e) {
+		isRightMB = e.button == 2;
+	}
+	//alert(mouseX+" "+mouseY);
+	if(hovered_object!=undefined) {
+		if(hovered_object.is_hover&&!isRightMB) {
+			hovered_object.whenClick();
+		}
+	}
+}
+var isMouseClicking=false;
+var isMouseGoDown=false;
+var isRightClickDown=false;
+function mousy(event) {
+	var e=event;
+	var isRightMB=false;
+	if ("which" in e) {
+		isRightMB = e.which == 3;
+	}
+    else if ("button" in e) {
+		isRightMB = e.button == 2;
+	}
+	isMouseClicking=true&&!isRightMB;
+	isRightClickDown=isRightMB;
+}
+
+function mouseouty(event) {
+	isMouseClicking=false;
+	isRightClickDown=false;
+}
+
+function mousyup(event) {
+	if(hovered_object!=undefined) {
+		if(isMouseClicking==true) {
+			hovered_object.whenClick();
+		}
+	}
+	isMouseClicking=false;
+	isRightClickDown=false;
+}
+
+function squaresTouch(X1,Y1,W1,H1,X2,Y2,W2,H2) {
+	if(W1<0) {
+		X1+=W1;
+		W1*=-1;
+	}
+	if(H1<0) {
+		Y1+=H1;
+		H1*=-1;
+	}
+	if(W2<0) {
+		X2+=W2;
+		W2*=-1;
+	}
+	if(H2<0) {
+		Y2+=H2;
+		H2*=-1;
+	}
+	if(X1>X2+W2||X2>X1+W1) {
+		return false;
+	}
+	if(Y1>Y2+H2||Y2>Y1+H1) {
+		return false;
+	}
+	return true;
+}
+
+function renderObject(obj) {
+	obj.preRender();
+    if(imgs[obj.img]==undefined&&obj.img.indexOf("rect")!=0) {
+
+        var img = new Image();
+        img.src=obj.img;
+        imgs[obj.img]=img;
+        img.onload = function() {
+            renderImageObject(obj,this);
+        };
+    } else if(obj.img.indexOf("rect")!=0){
+        var img=imgs[obj.img];
+        renderImageObject(obj,img);
+    }
+	if(obj.img=="rect") {
+		ctx.fillStyle = 'rgb(255,239,202)';
+		ctx.strokeStyle = 'rgb(0,0,0)';
+		ctx.lineWidth=1;
+		ctx.setLineDash([0, 0]);
+		var mod=0.1+0;
+		var mod2=0.5+0;
+		ctx.fillRect(obj.X+mod2, obj.Y+mod2, obj.cols+mod, obj.rows+mod);
+		ctx.strokeRect(obj.X+mod2, obj.Y+mod2, obj.cols+mod, obj.rows+mod);
+		obj.H=obj.rows;
+		obj.W=obj.cols;
+		for(var i=obj.Y+1;i<obj.H+obj.Y&&obj.note_selected==true;i++) {
+			ctx.beginPath();
+			ctx.strokeStyle = 'rgb(170,170,170)';
+			ctx.lineWidth=1;
+			ctx.setLineDash([1, 1]);
+			ctx.moveTo(obj.X+i%2+1, i+mod2);
+			ctx.lineTo(obj.X+obj.W+mod2-0.5, i+mod2);
+			ctx.stroke();
+		}
+	}
+	if(obj.img=="rect_select") {
+		obj.H=obj.rows;
+		obj.W=obj.cols;
+		var mod=0.1+0;
+		var mod2=0.5+0;
+		ctx.beginPath();
+		ctx.strokeStyle = 'rgb(0,0,0)';
+		ctx.lineWidth=1;
+		ctx.setLineDash([1, 1]);
+		ctx.moveTo(obj.X,obj.Y+mod2);
+		ctx.lineTo(obj.X+obj.W,obj.Y+mod2);
+		
+		ctx.moveTo(obj.X+mod2,obj.Y+mod);
+		ctx.lineTo(obj.X+mod2,obj.Y+obj.H+mod);
+		
+		ctx.moveTo(obj.X,obj.Y+obj.H+mod2);
+		ctx.lineTo(obj.X+obj.W+1,obj.Y+obj.H+mod2);
+		
+		ctx.moveTo(obj.X+obj.W+mod2,obj.Y+mod);
+		ctx.lineTo(obj.X+obj.W+mod2,obj.Y+obj.H+mod+1);
+		
+		ctx.stroke();
+	}
+}
+
+function renderImageObject(obj,img) {
+    
+    var rows=obj.rows;
+    var cols=obj.cols;
+    var frame=obj.frame;
+    var fX=frame%cols+1;
+    var fY=Math.floor(frame/cols)+1;
+    var IMGW=img.width/cols*fX;
+    var IMGH=img.height/rows*fY;
+    var UW=1;
+    var UH=1;
+    if(cols<=1) {
+        UW=0;
+    }
+    if(rows<=1) {
+        UH=0;
+    }
+	if(obj.isVisible==true) {
+		ctx2.drawImage(img, 0, 0);
+		var imgData = ctx2.getImageData(IMGW-img.width/cols+UW, IMGH-img.height/rows+UH, img.width/cols-UW, img.height/rows-UH);
+		var prevData = ctx.getImageData(obj.X, obj.Y, img.width/cols-UW, img.height/rows-UH);
+		// go through pixels
+		for (var i = 0; i < imgData.data.length; i += 4) {
+			if(imgData.data[i+0]==0&&imgData.data[i+1]==255&&imgData.data[i+2]==0) {
+				imgData.data[i+0]=prevData.data[i+0];
+				imgData.data[i+1]=prevData.data[i+1];
+				imgData.data[i+2]=prevData.data[i+2];
+			}
+		}
+		
+		ctx.putImageData(imgData, obj.X, obj.Y);
+	}
+	obj.W=img.width/cols;
+	obj.H=img.height/rows;
+}
+
+function newObject(X,Y,cols,rows,img) {
+    var objy=[];
+    objy.X=X;
+    objy.Y=Y;
+    objy.W=0;
+    objy.H=0;
+    objy.img=img;
+    objy.frame=0;
+    objy.cols=cols;
+    objy.rows=rows;
+	objy.ID=objects.length;
+    objects.push(objy);
+    objy.hover=function(){};
+	objy.whenClick=function(){};
+	objy.whenHover=function(){};
+	objy.preRender=function(){};
+	objy.whileSelected=function(){};
+	objy.is_hover=false;
+	objy.forDrag=false;
+	objy.hoverable=true;
+	objy.isVisible=true;
+	objy.onClick=function(){};
+	objy.unselectedMoment=function(){};
+	objy.whenDie=function(){};
+	objy.kill=function() {
+		this.whenDie();
+		objects[this.ID]=undefined;
+		this.whenClick=function(){};
+		this.hover=function(){};
+		this.whenHover=function(){};
+		this.preRender=function(){};
+		this.whileSelected=function(){};
+		this.onClick=function(){};
+		this.dead=true;
+	}
+	objy.pushForward = function() {
+		objects[this.ID]=undefined;
+		objects.push(this);
+	}
+    return objy;
+}
+
+function newButton(X,Y,cols,rows,img) {
+    var objy=newObject(X,Y,cols,rows,img);
+    objy.hover=function() {
+		var phony=mobileAndTabletCheck();
+        if(mouseX>=this.X&&mouseX<=this.W+this.X&&mouseY>=this.Y&&mouseY<=this.H+this.Y&&(!phony||phony&&isMouseClicking)) {
+            this.frame=1;
+			if(cols<=1&&rows<=1) {
+				this.frame=0;
+			}
+			if(this.hoverable==true) {
+				hovered_object=this;
+				this.is_hover=true;
+			}
+			var bullshitfuck=false;
+			if(selected_object!=undefined) {
+				if(selected_object.ID<this.ID) {
+					bullshitfuck=true;
+				}
+			}
+			if(this.forDrag==true) {
+				if(isMouseClicking&&(selected_object==undefined||bullshitfuck)) {
+					if(isMouseGoDown) {
+						if(selected_object!=undefined) {
+							selected_object.unselectedMoment();
+						}
+						selected_object=this;
+						this.is_selected=true;
+						this.selected_mouseX=mouseX;
+						this.selected_mouseY=mouseY;
+						this.selected_X=this.X;
+						this.selected_Y=this.Y;
+						this.selected_W=this.W;
+						this.selected_H=this.H;
+					}
+				} else if(!isMouseClicking){
+					if(selected_object==this) {
+						this.unselectedMoment();
+					}
+					selected_object=undefined;
+					this.is_selected=false;
+				}
+			}
+            return true;
+        } else {
+            this.frame=0;
+			this.is_hover=false;
+			if(!isMouseClicking&&selected_object==this) {
+				this.unselectedMoment();
+				selected_object=undefined;
+				this.is_selected=false;
+			}
+        }
+        return false;
+    }
+    return objy;
+}
+
+function newText(X,Y,text) {
+	var l=0;
+	var arr=[];
+	var TX=X;
+	for(var i=0;i<text.length;i++) {
+		var bullshit=97;
+		var piccy="text.png";
+		if(text.charCodeAt(i)>=48&&text.charCodeAt(i)<=48+9) {
+			bullshit=48;
+			piccy="numbers.png";
+		}
+		var cc=text.charCodeAt(i)-bullshit;
+		if(text.charAt(i)=='-') {
+			cc=0;
+			piccy="signs.png";
+		}
+		if(text.charAt(i)==':') {
+			cc=1;
+			piccy="signs.png";
+		}
+		if(text.charAt(i)!=' '&&text.charAt(i)!='|') {
+			var RR=10;
+			var CC=3;
+			if(piccy=="numbers.png") {
+				RR=6;
+				CC=5;
+			}
+			var betty=newObject(TX,Y+l*20,RR,CC,piccy);
+			betty.frame=cc;
+			arr.push(betty);
+		}
+		TX+=8;
+		if(text.charAt(i)=='|') {
+			l++;
+			TX=X;
+		}
+	}
+	arr.kill=function() {
+		for(var i=0;i<this.length;i++) {
+			this[i].kill();
+		}
+	}
+	return arr;
+}
+
+function clearMenu() {
+	for(var i=0;i<objects.length;i++) {
+		objects[i].kill();
+	}
+	objects=[];
+	tools=[];
+	note_btns_arr=[];
+	pianos=[];
+	isPlaying=false;
+	currentPlayTime=0;
+	stopAllNotes();
+}
+var note_btns_arr=[];
+var dragbarW=undefined;
+var dragbarH=undefined;
+var timelineBar=undefined;
+var timelineLength=0;
+var noteScrollX=0;
+var noteScrollY=0;
+var note_division=15;
+var zoom=15;
+var note_place_box=undefined;
+var note_last_length=30;
+var tools=[];
+var sel_top_note=[];
+sel_top_note.dead=true;
+var sel_bottom_note=[];
+sel_bottom_note.dead=true;
+var sel_left_note=[];
+sel_left_note.dead=true;
+sel_top_note.pitch=0;
+sel_bottom_note.pitch=0;
+sel_left_note.start=0;
+var pianos=[];
+
+function selectTheNotes(pooki) {
+	for(var i=0;i<objects.length;i++) {
+		var oby=objects[i];
+		if(oby.pitch!=undefined) {
+			var touchytouch=false;
+			var classic=false;
+			if(pooki!=undefined&&pooki!="lol") {
+				touchytouch=squaresTouch(oby.X,oby.Y,oby.W,oby.H,pooki.X,pooki.Y,pooki.W,pooki.H);
+				classic=true;
+			} else if(pooki!="lol") {
+				touchytouch=oby.note_selected==true&&oby.dead!=true;
+			}
+			if(touchytouch) {
+				oby.note_selected=true;
+				if(oby.pitch<sel_bottom_note.pitch||sel_bottom_note.dead==true) {
+					sel_bottom_note=oby;
+				}
+				if(oby.pitch>sel_top_note.pitch||sel_top_note.dead==true) {
+					sel_top_note=oby;
+				}
+				if(oby.start<sel_left_note.start||sel_left_note.dead==true) {
+					sel_left_note=oby;
+				}
+			} else {
+				if(!classic||!isShiftPressed) {
+					oby.note_selected=false;
+					if(sel_left_note==oby) {
+						sel_left_note=[];
+						sel_left_note.dead=true;
+					}
+					if(sel_top_note==oby) {
+						sel_top_note=[];
+						sel_top_note.dead=true;
+					}
+					if(sel_bottom_note==oby) {
+						sel_bottom_note=[];
+						sel_bottom_note.dead=true;
+					}
+				}
+			}
+		}
+	}
+}
+
+function newTool(X,Y,func,framey,imgey) {
+	
+	var btn=newButton(X,Y,2,1,"tool_button.png");
+	tools.push(btn);
+	btn.isVisible=false;
+	btn.gfx=newObject(btn.X,btn.Y,2,1,"tool_button.png");
+	btn.symbo=newObject(btn.X,btn.Y,5,5,"tool_symbols.png");
+	btn.selsel=false;
+	btn.func=func;
+	btn.symbo.frame=framey;
+	btn.groupy=1;
+	pianoRollTools.push(btn.gfx);
+	pianoRollTools.push(btn.symbo);
+	btn.additionalFunc = function(){};
+	btn.preRender = function() {
+		if(this.func=="play"&&isSpacePressed) {
+			this.onClick();
+		}
+		if(this.selsel) {
+			this.gfx.frame=1;
+			this.symbo.X=this.X+1;
+			this.symbo.Y=this.Y+1;
+		} else {
+			this.gfx.frame=0;
+			this.symbo.X=this.X;
+			this.symbo.Y=this.Y;
+		}
+	}
+	btn.noSelsel=function() {
+		if(this.func=="play") {
+			currentPlayTime=timelineBar.timeline.start;
+			isPlaying=false;
+			stopAllNotes();
+		}
+	}
+	btn.onClick = function() {
+		if(this.selsel==true&&this.func!="play") {
+			return;
+		}
+		cursorObject.img=imgey;
+		var wasSelsel=this.selsel;
+		for(var i=0;i<tools.length;i++) {
+			if(tools[i]!=this&&tools[i].groupy==this.groupy) {
+				tools[i].selsel=false;
+				tools[i].noSelsel();
+			}
+		}
+		this.selsel=true;
+		var f=this.func;
+		if(f=="write") {
+			cursorObject.cursor_state="write";
+		}
+		if(f=="select") {
+			cursorObject.cursor_state="select";
+		}
+		if(f=="play") {
+			cursorObject.cursor_state="play";
+			this.selsel=!wasSelsel;
+			if(this.selsel==true) {
+				orderNotesToEvents(timelineBar.timeline.start);
+				isPlaying=true;
+			} else {
+				this.noSelsel();
+				cursorObject.img="cursor.png";
+				if(this.goto!=undefined) {
+					this.goto.onClick();
+				}
+			}
+		}
+		if(f=="playC") {
+			isChordsPlaying=true;
+			cursorObject.cursor_state="playC";
+		}
+		if(f=="checkC") {
+			if(isChordsPlaying) {
+				this.the_tool.onClick();
+			}
+			this.selsel=false;
+			this.additionalFunc();
+		}
+	}
+	return btn;
+}
+function mainMenu() {
+	clearMenu();
+	var i=0;
+	newObject(0,0,1,1,"menu_background.png");
+	var b1=newButton(10,10+i*40,1,1,"menu_button.png");
+	b1.whenClick = function() {
+		pianoRoll();
+	}
+	newText(13,13,"piano roll");
+	i++;
+	var b2=newButton(10,10+i*30,1,1,"menu_button.png");
+	b2.whenClick = function() {
+		chordMenu();
+	}
+	newText(13,13+i*30,"chords scales");
+}
+var pickedTonic=[];
+var isChordsPlaying=false;
+function chordMenu() {
+	clearMenu();
+	pickedTonic=[];
+	pickedTonic.PID=-1;
+	tools=[];
+	newObject(0,0,1,1,"menu_back_chords.png");
+	var exitbtn=newButton(0,351,1,2,"button.png");
+	exitbtn.whenClick = function() {
+		mainMenu();
+	}
+	var minusX=-35;
+	var piano_gfx=newObject(200-minusX,350,1,1,"piano_buttons.png");
+	var T3=newTool(110,351,"playC",3,"cursor_load.png");
+	var T4=newTool(140,351,"checkC",11,"cursor_none.png");
+	var T5=newTool(170,351,"major",12,"cursor_none.png");
+	T5.groupy=2;
+	var T6=newTool(200,351,"minor",13,"cursor_none.png");
+	T6.groupy=2;
+	T4.the_tool=T3;
+	for(var i=0;i<12;i++) {
+		var btn=newButton(201+i*14-minusX,351,2,1,"piano_key.png");
+		var gfx=newObject(btn.X,btn.Y,2,1,"piano_key.png");
+		btn.gfx=gfx;
+		btn.PID=i;
+		btn.isVisible=false;
+		btn.whenClick = function() {
+			pickedTonic=this;
+			if(isChordsPlaying==false) {
+				stopAllNotes();
+				sound_notes["note"+(this.PID+40)].playNote();
+			}
+		}
+		btn.preRender = function() {
+			if(pickedTonic==this) {
+				this.gfx.frame=1;
+			} else {
+				this.gfx.frame=0;
+			}
+		}
+	}
+	tools.chordPlayer=[];
+	var chordPlayer=newObject(0,0,1,1,"cursor_none.png");
+	chordPlayer.timer=0;
+	chordPlayer.curChord=0;
+	chordPlayer.tooly=T3;
+	chordPlayer.tooly2=T4;
+	chordPlayer.major_btn=T5;
+	chordPlayer.minor_btn=T6;
+	chordPlayer.ruined=false;
+	chordPlayer.points=0;
+	chordPlayer.stary=newObject(430,351,1,1,"star.png");
+	chordPlayer.stary.chordPlayer=chordPlayer;
+	chordPlayer.stary.score=[];
+	chordPlayer.stary.score.kill=function(){};
+	chordPlayer.stary.preRender = function() {
+		this.isVisible=false;
+		if(this.chordPlayer.points>0) {
+			this.isVisible=true;
+		}
+	}
+	T4.chordPlayer=chordPlayer;
+	T4.soundish1=new Audio("YN_Yes.mp3");
+	T4.soundish2=new Audio("YN_No.wav");
+	T4.soundish3=new Audio("UI_laser.wav");
+	T4.major_btn=T5;
+	T4.minor_btn=T6;
+	T4.additionalFunc = function() {
+		if(isChordsPlaying||!this.major_btn.selsel&&!this.minor_btn.selsel||pickedTonic.PID==-1) {
+			return;
+		}
+		if(pickedTonic.PID==this.chordPlayer.the_tonic&&(chordPlayer.majmin=="major"&&this.major_btn.selsel||chordPlayer.majmin=="minor"&&this.minor_btn.selsel)) {
+			console.log("Ruined: "+this.chordPlayer.ruined);
+			if(this.chordPlayer.ruined==true) {
+				this.soundish3.currentTime=0;
+				this.soundish3.play();
+			} else {
+				this.soundish1.currentTime=0;
+				this.soundish1.play();
+				this.chordPlayer.points++;
+				this.chordPlayer.stary.score.kill();
+				this.chordPlayer.stary.score=newText(447,353,""+this.chordPlayer.points);
+			}
+			this.chordPlayer.newLevel();
+			this.major_btn.selsel=false;
+			this.minor_btn.selsel=false;
+			this.chordPlayer.tooly.onClick();
+		} else {
+			this.soundish2.currentTime=0;
+			this.soundish2.play();
+			this.chordPlayer.ruined=true;
+		}
+	}
+	for(var i=0;i<4;i++) {
+		chordPlayer["chord"+i]=newObject(160+i*60,200,1,1,"chord.png");
+		var chordy=chordPlayer["chord"+i];
+		chordy.isVisible=false;
+	}
+	chordPlayer.newLevel = function() {
+		this.ruined=false;
+		var note_list=["c","c#","d","d#","e","f","f#","g","g#","a","a#","b"];
+		note_list.jumps_major=[0,2,4,5,7,9,11];
+		note_list.jumps_minor=[0,2,3,5,7,8,10];
+		this.majmin=randomFromArray(["major","minor"]);
+		var jumps=note_list["jumps_"+this.majmin];
+		this.major_btn.selsel=false;
+		this.minor_btn.selsel=false;
+		this.the_tonic=random(12);
+		this.the_scale=[];
+		var addy=-12;
+		for(var i=0;i<22;i++) {
+			if(i%7==0) {
+				addy+=12;
+			}
+			var numanuma=this.the_tonic+jumps[i%7]+addy;
+			this.the_scale.push(numanuma);
+			this.the_scale[i+"#"]=numanuma+1;
+			this.the_scale[i+"b"]=numanuma-1;
+		}
+		var progressions=[];
+		progressions.push([[1,3,5],[1,4,6],[0,2,5],[1,3,5]]);
+		this.currentProgression=randomFromArray(progressions);
+		this.timey=40;
+		this.timer=this.timey;
+		this.curChord=0;
+		this.wereChordsPlaying=isChordsPlaying;
+		pickedTonic=[];
+		pickedTonic.PID=-1;
+	}
+	chordPlayer.preRender = function() {
+		if(!isChordsPlaying) {
+			this.timer=0;
+			this.curChord=0;
+			for(var i=0;i<this.currentProgression.length;i++) {
+				this["chord"+i].isVisible=false;
+			}
+			cursorObject.img="cursor_none.png";
+			this.tooly.selsel=false;
+			if(this.wereChordsPlaying) {
+				stopAllNotes();
+			}
+		}
+		this.wereChordsPlaying=isChordsPlaying;
+		if(!isChordsPlaying) {
+			return;
+		}
+		if(this.timer>0) {
+			this.timer--;
+		} else {
+			if(this.curChord>=this.currentProgression.length) {
+				isChordsPlaying=false;
+			} else {
+				this.timer=this.timey;
+				this["chord"+this.curChord].isVisible=true;
+				stopAllNotes();
+				for(var i=0;i<this.currentProgression[this.curChord].length;i++) {
+					var notey=this.currentProgression[this.curChord][i];
+					sound_notes["note"+(this.the_scale[notey+8-2]+28)].playNote();
+					console.log(this.the_scale[notey+8]);
+				}
+				console.log("---");
+			}
+			this.curChord++;
+		}
+	}
+	setUpCursor();
+	cursorObject.img="cursor_none.png"
+	chordPlayer.newLevel();
+	T3.onClick();
+}
+var pianoRollTools=[];
+function pianoRoll() {
+	clearMenu();
+	newObject(0,0,1,1,"pianoroll_background.png");
+	pianos=[];
+	note_btns_arr=[];
+	tools=[];
+	pianoRollTools=[];
+	timelineLength=521;
+	var o=0;
+	var wb=["w","b","w","w","b","w","b","w","w","b","w","b"];
+	
+	for(var i=0;i<88;i++) {
+		var some_button=newButton(102,49-i*14+87*14,1,1,"button_note.png");
+		if(wb[(94-i)%12]=="b") {
+			some_button.img="button_note_black.png";
+		}
+		if(i%12==0) {
+			var ttt=1;
+			if(i==84) {
+				ttt=2;
+			}
+			while(ttt>0) {
+				var pp=newButton(some_button.X,some_button.Y,1,1,"piano.png");
+				pp.liney=some_button;
+				pp.forDrag=true;
+				pp.kakidoo=0;
+				if(ttt==2) {
+					pp.kakidoo=-168;
+				}
+				pp.note_namey=newObject(pp.X+11,pp.Y+169,6,2,"note_text.png");
+				pp.numy=newObject(pp.X+19,pp.Y+169,5,3,"small_numbers.png");
+				pp.numy.frame=i/12+2;
+				if(ttt==2) {
+					pp.numy.frame++;
+				}
+				pp.preRender = function() {
+					this.X=this.liney.X;
+					this.Y=(this.liney.Y+some_button.H*9+6-169)+this.kakidoo;
+					if(this.is_hover==true&&cursorObject.cursor_state=="write") {
+						cursorObject.img="cursor.png";
+					}
+					var kooki=15;
+					this.note_namey.Y=this.Y+169-kooki;
+					this.numy.Y=this.Y+169-kooki;
+				}
+				pianos.push(pp);
+				ttt--;
+			}
+			o++
+		}
+		some_button.octave=o;
+		some_button.liney=i;
+		some_button.OGX=some_button.X;
+		some_button.OGY=some_button.Y;
+		some_button.preRender=function() {
+			this.Y=this.OGY+noteScrollY;
+		}
+		note_btns_arr[i]=some_button;
+	}
+	for(var j=0;j<120;j++) {
+		var leeny=newObject(102+j*15,49,1,1,"button_note_line.png");
+		leeny.LID=j;
+		leeny.start=leeny.X;
+		leeny.preRender=function() {
+			this.X=132+(this.LID*15+noteScrollX)/15*zoom;
+			while(this.X<132) {
+				this.X+=4*435;
+			}
+			if(this.LID%32==0) {
+				this.img="button_note_lineB.png";
+			} else {
+				this.img="button_note_line.png";
+			}
+		}
+	}
+	
+	newObject(102,49,1,1,"notes_border.png");
+	dragbarW=newButton(102,0,1,1,"dragbar_w.png");
+	dragbarH=newButton(528,21,1,1,"dragbar_h.png");
+	dragbarW.forDrag=true;
+	dragbarH.forDrag=true;
+	dragbarW_symbol=newObject(102,0,1,1,"button_dragbar_w.png");
+	dragbarH_symbol=newObject(528,21,1,1,"button_dragbar_h.png");
+	dragbarH.symbo=dragbarH_symbol;
+	timelineBar=newButton(102,21,1,1,"timeline_bar.png");
+	timelineBar.whileSelected = function() {
+		if(mouseX>=this.X&&mouseX<=this.X+this.W) {
+			currentPlayTime=Math.floor(Math.max((mouseX-132)*15/zoom-noteScrollX,0)/note_division)*note_division;
+			this.timeline.start=currentPlayTime;
+		}
+	}
+	timelineBar.forDrag=true;
+	timelineBar.timeline=newObject(timelineBar.X,20,1,1,"timeline.png");
+	timelineBar.timeline.timelineBar=timelineBar;
+	timelineBar.timeline.start=0;
+	timelineBar.timeline.preRender = function() {
+		this.X=132+(currentPlayTime+noteScrollX+4)/15*zoom-4;
+		if(this.timelineBar.is_selected==true||isPlaying==true) {
+			this.img="timeline.png";
+		} else {
+			this.img="timeline_chill.png";
+		}
+	}
+	dragbarH.scrolly = function() {
+		if(this.symbo.Y<21) {
+			this.symbo.Y=21;
+		}
+		if(this.symbo.Y>371) {
+			this.symbo.Y=371;
+		}
+		noteScrollY=Math.ceil(-881*((this.symbo.Y-21)/(371-21)));
+	}
+	dragbarH.whileSelected=function() {
+		this.symbo.Y=mouseY-15;
+		this.scrolly();
+	}
+	dragbarH.symbo.Y=226;
+	dragbarH.scrolly();
+	dragbarW.symbo=dragbarW_symbol;
+	dragbarW.whileSelected=function() {
+		if(this.is_selected==true) {
+			this.symbo.X=mouseX-20;
+			if(this.symbo.X<102) {
+				this.symbo.X=102;
+			}
+			if(this.symbo.X>timelineLength) {
+				this.symbo.X=timelineLength;
+			}
+			noteScrollX=Math.ceil(-855*((this.symbo.X-102)/((timelineLength-102))));
+			
+		}
+	}
+	var exitbtn=newButton(0,0,1,2,"button.png");
+	exitbtn.whenClick = function() {
+		mainMenu();
+	}
+	pianoRollTools.push(exitbtn);
+	var sidebary=newObject(0,0,1,1,"pianoroll_sidebar.png");
+	pianoRollTools.push(sidebary);
+	note_place_box=newButton(102,49,1,1,"note_place_box.png");
+	
+	for(var i=0;i<pianos.length;i++) {
+		pianos[i].pushForward();
+		pianos[i].note_namey.pushForward();
+		pianos[i].numy.pushForward();
+	}
+	
+	timelineBar.pushForward();
+	timelineBar.timeline.pushForward();
+	
+	dragbarH.pushForward();
+	dragbarH_symbol.pushForward();
+	dragbarW.pushForward();
+	dragbarW_symbol.pushForward();
+	
+	note_place_box.isVisible=false;
+	note_place_box.whenHover = function() {
+		if(cursorObject.cursor_state=="write"&&(selected_object==undefined||selected_object==dummy_obj)) {
+			cursorObject.img="cursor_pen.png";
+			if(isRightClickDown) {
+				cursorObject.img="cursor_delete.png";
+			}
+		}
+	}
+	note_place_box.onClick = function() {
+		if((selected_object==undefined||selected_object==dummy_obj)) {
+			if(cursorObject.cursor_state=="write") {
+				selectTheNotes("lol");
+				var n1=newNote(0,0,note_last_length,0);
+				n1.selected_X=n1.X+1;
+				n1.selected_Y=n1.Y+1;
+				n1.selected_W=100;
+				n1.selected_mouseX=n1.X+1;
+				n1.selected_mouseY=n1.Y+1;
+				n1.whileSelected();
+				selected_object=n1;
+				n1.is_selected=true;
+				cursorObject.img="cursor_drag.png";
+			}
+			if(cursorObject.cursor_state=="select") {
+				var n1=newButton(mouseX,mouseY,50,50,"rect_select");
+				n1.selected_X=n1.X+1;
+				n1.selected_Y=n1.Y+1;
+				n1.selected_W=100;
+				n1.selected_mouseX=n1.X+1;
+				n1.selected_mouseY=n1.Y+1;
+				n1.whileSelected();
+				selected_object=n1;
+				n1.is_selected=true;
+				n1.lastMouseyX=-1;
+				n1.lastMouseyY=-1;
+				n1.preRender = function() {
+					this.W=mouseX-this.X-1;
+					this.H=mouseY-this.Y-1;
+					this.cols=this.W;
+					this.rows=this.H;
+					if(this.lastMouseyX!=mouseX||this.lastMouseyY!=mouseY) {
+						selectTheNotes(this);
+					}
+					this.lastMouseyX=mouseX;
+					this.lastMouseyY=mouseY;
+					if(!isMouseClicking) {
+						if(selected_object==this) {
+							selected_object=undefined;
+						}
+					}
+					if(selected_object!=this) {
+						this.kill();
+					}
+				}
+			}
+		}
+	}
+	var T1=newTool(0,50,"write",0,"cursor_pen.png");
+	var T2=newTool(27,50,"select",7,"cursor.png");
+	var T3=newTool(0,78,"play",3,"cursor_load.png");
+	
+	T3.goto=T1;
+	for(var i=0;i<pianoRollTools.length;i++) {
+		pianoRollTools[i].pushForward();
+	}
+	setUpCursor();
+}
+
+function newNote(start,pitch,length,voice) {
+	var btn=newButton(start,pitch,length,14,"rect");
+	btn.isNote=true;
+	btn.pitch=pitch;
+	btn.voice=voice;
+	btn.length=length;
+	btn.start=start;
+	btn.forDrag=true;
+	var note_namey=newObject(btn.X,btn.Y,6,2,"note_text.png");
+	btn.note_numy=newObject(btn.X+50,btn.Y,5,3,"small_numbers.png");
+	btn.unselectedMoment=function() {
+		sound_notes["note"+(this.pitch+1)].sF.decay=true;
+	}
+	btn.onClick=function() {
+		sound_notes["note"+(this.pitch+1)].playNote();
+	}
+	btn.preRender=function() {
+		this.X=132+Math.floor((this.start+noteScrollX)/15*zoom);
+		this.Y=note_btns_arr[this.pitch].Y;
+		this.cols=this.length/15*zoom;
+		this.note_name.X=this.X+2;
+		this.note_name.Y=this.Y;
+		this.note_name.frame=(this.pitch+9)%12;
+		this.note_numy.X=this.X+17;
+		this.note_numy.Y=this.Y+1;
+		this.note_numy.isVisible=this.cols>=30;
+		this.note_numy.frame=Math.floor((this.pitch+9+12+12)/12);
+		if(cursorObject.cursor_state!="write") {
+			this.forDrag=false;
+			this.hoverable=false;
+		} else {
+			this.forDrag=true;
+			this.hoverable=true;
+		}
+		if(this.is_hover==true&&!this.is_selected&&cursorObject.cursor_state=="write") {
+			if(!isRightClickDown) {
+				if(this.moveType(this.X,this.W,mouseX)) {
+					cursorObject.img="cursor_drag.png";
+				} else {
+					cursorObject.img="cursor_stretch.png";
+				}
+			} else {
+				cursorObject.img="cursor_delete.png";
+				this.note_name.kill();
+				this.note_numy.kill();
+				this.kill();
+			}
+		}
+	}
+	btn.moveType=function(sel_X,sel_W,sel_mouseX) {
+		return sel_mouseX<=sel_X+sel_W-6;
+	}
+	btn.whileSelected=function() {
+		if(this.moveType(this.selected_X,this.selected_W,this.selected_mouseX)) {
+			var wasStart=this.start;
+			var wasPitch=this.pitch;
+			var minX1=0;
+			var maxY1=87;
+			var minY1=0;
+			if(this.note_selected==true&&(sel_top_note==undefined||sel_left_note==undefined||sel_bottom_note==undefined||sel_top_note.dead==true||sel_left_note.dead==true||sel_bottom_note.dead==true)) {
+				selectTheNotes(undefined);
+			}
+			if(this.note_selected==true) {
+				minX1=this.start-sel_left_note.start;
+				maxY1=87-(sel_top_note.pitch-this.pitch);
+				minY1=this.pitch-sel_bottom_note.pitch;
+			}
+			this.start=Math.round(Math.max((this.selected_X-this.selected_mouseX+mouseX-132)*15/zoom-noteScrollX,0)/note_division)*note_division;
+			if(this.start<minX1) {
+				this.start=minX1;
+			}
+			this.pitch=87-Math.floor(Math.max(this.selected_Y-this.selected_mouseY+mouseY-49-noteScrollY,1)/14);
+			if(this.pitch<minY1) {
+				this.pitch=minY1;
+			}
+			if(this.pitch>maxY1) {
+				this.pitch=maxY1;
+			}
+			
+			if(this.note_selected==true) {
+				for(var i=0;i<objects.length;i++) {
+					var oby=objects[i];
+					if(oby.note_selected==true&&oby.start!=undefined&&oby.ID!=this.ID) {
+						oby.start-=wasStart-this.start;
+						oby.pitch-=wasPitch-this.pitch;
+					}
+				}
+			} else {
+				if(wasPitch!=this.pitch) {
+					sound_notes["note"+(wasPitch+1)].sF.decay=true;
+					sound_notes["note"+(this.pitch+1)].playNote();
+				}
+			}
+		} else {
+			var wasLength=this.length;
+			this.length=Math.round(Math.max(-this.start+(mouseX-132)*15/zoom-noteScrollX,note_division)/note_division)*note_division;
+			if(this.note_selected==true) {
+				for(var i=0;i<objects.length;i++) {
+					var oby=objects[i];
+					if(oby.note_selected==true&&oby.start!=undefined&&oby.ID!=this.ID) {
+						oby.length-=wasLength-this.length;
+						if(oby.length<15) {
+							oby.length=15;
+						}
+					}
+				}
+			}
+		}
+		note_last_length=this.length;
+	}
+	btn.note_name=note_namey;
+	
+	for(var i=0;i<pianos.length;i++) {
+		pianos[i].pushForward();
+		pianos[i].note_namey.pushForward();
+		pianos[i].numy.pushForward();
+	}
+	
+	timelineBar.pushForward();
+	timelineBar.timeline.pushForward();
+	
+	dragbarH.pushForward();
+	
+	dragbarH_symbol.pushForward();
+	
+	dragbarW.pushForward();
+	
+	dragbarW_symbol.pushForward();
+	
+	cursorObject.pushForward();
+	
+	for(var i=0;i<pianoRollTools.length;i++) {
+		pianoRollTools[i].pushForward();
+	}
+	return btn;
+}
+function setUpCursor() {
+	cursorObject=newObject(0,0,1,1,"cursor.png");
+	cursorObject.preRender=function() {
+		this.X=mouseX-9;
+		this.Y=mouseY-9;
+	}
+	cursorObject.cursor_state="none";
+	cursorObject.img="cursor.png";
+	
+}
+//var btn1=newButton(5,5,1,2,"button.png");
+//btn1.whenClick = function() {
+	//alert("test");
+//}
+//var text1=newText(22,13,"start game");
+mainMenu();
+
+//newNote(0,87,15,0);
+//newNote(0,0,15,0);
+var wasMouseClicking=false;
+var tempoCounter=0;
+var tempo=70;
+var wasPlaying=false;
+const interval = setInterval(function() {
+	if(!wasMouseClicking&&isMouseClicking) {
+		isMouseGoDown=true;
+	}
+	wasMouseClicking=isMouseClicking;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+	var there_was_undefined=false;
+    for(var i=0;i<objects.length;i++) {
+        if(objects[i]!=undefined) {
+            objects[i].hover();
+            renderObject(objects[i]);
+        } else {
+			there_was_undefined=true;
+		}
+    }
+	if(hovered_object!=undefined) {
+		if(hovered_object.is_hover==true) {
+			hovered_object.whenHover();
+			if(isMouseGoDown==true) {
+				hovered_object.onClick();
+			}
+		}
+	}
+	
+	if(selected_object!=undefined&&isMouseClicking) {
+		if(selected_object.is_selected==true) {
+			selected_object.whileSelected();
+		}
+	}
+	
+	for(var i=0;i<objects.length&&there_was_undefined==true;i++) {
+		if(objects[i]==undefined) {
+			objects.splice(i,1);
+			i--;
+		} else {
+			objects[i].ID=i;
+		}
+	}
+	isMouseGoDown=false;
+	if(isDeletePressed) {
+		for(var i=0;i<objects.length;i++) {
+			if(objects[i]!=undefined) {
+				if(objects[i].note_selected==true) {
+					objects[i].note_name.kill();
+					objects[i].note_numy.kill();
+					objects[i].kill();
+				}
+			}
+		}
+	}
+	isDeletePressed=false;
+	var maxtempocount=Math.floor((70/tempo)*5);
+	if(isPlaying) {
+		if(!wasPlaying) {
+			tempoCounter=0;
+		} else if(tempoCounter==0){
+			currentPlayTime+=15;
+		}
+		if(tempoCounter==0) {
+			for(var j=0;j<noteEvents.pitchList.length;j++) {
+				var pp=noteEvents.pitchList[j];
+				var pitchy=noteEvents[pp];
+				if(pitchy.length>0) {
+					if(pitchy[currentPlayTime]!=undefined) {
+						if(pitchy[currentPlayTime]=="on") {
+							sound_notes["note"+(pp+1)].playNote();
+						}
+						if(pitchy[currentPlayTime]=="off") {
+							sound_notes["note"+(pp+1)].sF.decay=true;
+						}
+					}
+				}
+			}
+			
+		}
+		tempoCounter++;
+		tempoCounter%=maxtempocount;
+	}
+	wasPlaying=isPlaying;
+	for(var i=1;i<=88;i++) {
+		if(sound_notes["note"+i].sA.decay==true) {
+			sound_notes["note"+i].sA.volume*=decay_percentage;
+		}
+		if(sound_notes["note"+i].sB.decay==true) {
+			sound_notes["note"+i].sB.volume*=decay_percentage;
+		}
+		if(sound_notes["note"+i].sC.decay==true) {
+			sound_notes["note"+i].sC.volume*=decay_percentage;
+		}
+		if(sound_notes["note"+i].sD.decay==true) {
+			sound_notes["note"+i].sD.volume*=decay_percentage;
+		}
+	}
+	isSpacePressed=false;
+},20)
+
+</script>
+
+</body>
+</html>
