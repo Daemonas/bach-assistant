@@ -354,6 +354,7 @@ function renderImageObject(obj,img) {
         UH=0;
     }
 	if(obj.isVisible==true) {
+		try {
 		ctx2.drawImage(img, 0, 0);
 		var imgData = ctx2.getImageData(IMGW-img.width/cols+UW, IMGH-img.height/rows+UH, img.width/cols-UW, img.height/rows-UH);
 		var prevData = ctx.getImageData(obj.X, obj.Y, img.width/cols-UW, img.height/rows-UH);
@@ -367,6 +368,9 @@ function renderImageObject(obj,img) {
 		}
 		
 		ctx.putImageData(imgData, obj.X, obj.Y);
+		}catch(error) {
+			//lololol
+		}
 	}
 	obj.W=img.width/cols;
 	obj.H=img.height/rows;
