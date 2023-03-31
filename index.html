@@ -750,6 +750,7 @@ function chordMenu() {
 	chordPlayer.minor_btn=T6;
 	chordPlayer.ruined=false;
 	chordPlayer.points=0;
+	chordPlayer.points2=0;
 	chordPlayer.stary=newObject(430,351,1,1,"star.png");
 	chordPlayer.stary.chordPlayer=chordPlayer;
 	chordPlayer.stary.score=[];
@@ -757,6 +758,16 @@ function chordMenu() {
 	chordPlayer.stary.preRender = function() {
 		this.isVisible=false;
 		if(this.chordPlayer.points>0) {
+			this.isVisible=true;
+		}
+	}
+	chordPlayer.stary2=newObject(470,351,1,1,"star2.png");
+	chordPlayer.stary2.chordPlayer=chordPlayer;
+	chordPlayer.stary2.score=[];
+	chordPlayer.stary2.score.kill=function(){};
+	chordPlayer.stary2.preRender = function() {
+		this.isVisible=false;
+		if(this.chordPlayer.points2>0) {
 			this.isVisible=true;
 		}
 	}
@@ -780,7 +791,7 @@ function chordMenu() {
 				this.soundish1.play();
 				this.chordPlayer.points++;
 				this.chordPlayer.stary.score.kill();
-				this.chordPlayer.stary.score=newText(447,353,""+this.chordPlayer.points);
+				this.chordPlayer.stary.score=newText(this.chordPlayer.stary.X+17,353,""+this.chordPlayer.points);
 			}
 			this.chordPlayer.newLevel();
 			this.major_btn.selsel=false;
@@ -790,6 +801,13 @@ function chordMenu() {
 			this.soundish2.currentTime=0;
 			this.soundish2.play();
 			this.chordPlayer.ruined=true;
+			var curmistake=pickedTonic.PID+"_"+this.major_btn.selsel;
+			if(curmistake!=this.chordPlayer.lastMistake) {
+				this.chordPlayer.points2++;
+				this.chordPlayer.stary2.score.kill();
+				this.chordPlayer.stary2.score=newText(this.chordPlayer.stary2.X+17,353,""+this.chordPlayer.points2);
+			}
+			this.chordPlayer.lastMistake=curmistake;
 		}
 	}
 	for(var i=0;i<4;i++) {
@@ -798,6 +816,7 @@ function chordMenu() {
 		chordy.isVisible=false;
 	}
 	chordPlayer.newLevel = function() {
+		this.lastMistake="";
 		this.ruined=false;
 		var note_list=["c","c#","d","d#","e","f","f#","g","g#","a","a#","b"];
 		note_list.jumps_major=[0,2,4,5,7,9,11];
@@ -814,17 +833,39 @@ function chordMenu() {
 				addy+=12;
 			}
 			var numanuma=this.the_tonic+jumps[i%7]+addy;
-			this.the_scale.push(numanuma);
-			this.the_scale[i+"#"]=numanuma+1;
-			this.the_scale[i+"b"]=numanuma-1;
+			this.the_scale[(i-8+2)+""]=(numanuma);
+			this.the_scale[(i-8+2)+"#"]=numanuma+1;
+			this.the_scale[(i-8+2)+"b"]=numanuma-1;
 		}
 		var progressions=[];
-		progressions.push([[1,3,5],[1,4,6],[0,2,5],[1,3,5]]);
+		progressions.push([[1,3,5],[1,4,6],[0,2,5],[1,3,5]]);//I IV V I
+		progressions.push([[1,3,5],[1,4,6],[2,4,6],[0,2,5]]);//I IV ii V
+		progressions.push([[1,3,5],[1,4,6],[1,3,5],[0,2,5]]);//I IV I V
+		progressions.push([[1,3,5],[1,4,6],[3,5,7],[2,4,6]]);//I IV iii ii
+		progressions.push([[0,2,5],[1,3,5],[1,4,6],[2,5,7]]);//V I IV V
+		progressions.push([[1,3,5],[-1,1,3],[-3,-1,1],[-2,0,2]]);//I vi IV V
+		progressions.push([[-2,0,2],[-1,1,3],[0,2,5],[1,3,5]]);//V vi V I
+		progressions.push([[1,3,5],[0,2,4],[-1,1,3],[-2,0,2]]);//I viio vi V
+		if(this.majmin=="major") {
+			progressions.push([[-2,1,3],["0b",1,3],[-1,1,4],[0,2,5]]);//I I7 IV V
+			progressions.push([[1,3,5],["0b",2,5],[-1,1,4],[0,4,5]]);//I v IV V7
+			progressions.push([[1,3,5],[1,4,"6b"],[0,2,5],[1,3,5]]);//I iv V I
+			progressions.push([[1,3,5],[1,"4#",6],[2,5,7],[3,5,8]]);//I Idim7 V I
+			progressions.push([[1,3,5],["1#",3,6],[2,4,6],[0,2,5]]);//I VI ii V
+			progressions.push([[1,3,5],[0,"3b","5b"],[-1,2,4],[-2,2,4]]);//I VII ii V
+		} else {
+			progressions.push([[1,3,5],[0,2,4],[-1,1,3],[-2,"0#",2]]);//i VII VI V
+			progressions.push([[1,3,5],[1,4,6],["0#",2,5],[1,3,5]]);//i iv V i
+			progressions.push([[1,3,5],[2,"4#","6#"],[2,5,"7#"],[3,5,8]]);//i II V i
+			progressions.push([[1,3,5],["-1#",1,4],["0#",2,5],[1,3,5]]);//i IV V i
+			progressions.push([[1,3,5],["1#",4,6],["0#",2,5],[1,3,5]]);//i I# V i
+		}
 		this.currentProgression=randomFromArray(progressions);
 		this.timey=40;
 		this.timer=this.timey;
 		this.curChord=0;
 		this.wereChordsPlaying=isChordsPlaying;
+		this.rotazia=randomFromArray([[0,0,-12,0],[0,0,0,0],[12,0,0,0]]);
 		pickedTonic=[];
 		pickedTonic.PID=-1;
 	}
@@ -856,7 +897,7 @@ function chordMenu() {
 				stopAllNotes();
 				for(var i=0;i<this.currentProgression[this.curChord].length;i++) {
 					var notey=this.currentProgression[this.curChord][i];
-					sound_notes["note"+(this.the_scale[notey+8-2]+28)].playNote();
+					sound_notes["note"+(this.the_scale[notey+""]+28+this.rotazia[i])].playNote();
 					console.log(this.the_scale[notey+8]);
 				}
 				console.log("---");
