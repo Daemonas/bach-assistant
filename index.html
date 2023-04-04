@@ -291,7 +291,24 @@ function renderObject(obj) {
         renderImageObject(obj,img);
     }
 	if(obj.img=="rect") {
-		ctx.fillStyle = 'rgb(255,239,202)';
+		var colory="255,239,202";
+		//soprano is 255,239,202
+		if(obj.voice==1) {
+			colory="255,239,202";
+		}
+		//alto is 225,198,249
+		if(obj.voice==2) {
+			colory="225,198,249";
+		}
+		//tenor is 104,230,192
+		if(obj.voice==3) {
+			colory="104,230,192";
+		}
+		//bass is 189,116,62
+		if(obj.voice==4) {
+			colory="189,116,62";
+		}
+		ctx.fillStyle = "rgb("+colory+")";
 		ctx.strokeStyle = 'rgb(0,0,0)';
 		ctx.lineWidth=1;
 		ctx.setLineDash([0, 0]);
@@ -332,6 +349,19 @@ function renderObject(obj) {
 		ctx.moveTo(obj.X+obj.W+mod2,obj.Y+mod);
 		ctx.lineTo(obj.X+obj.W+mod2,obj.Y+obj.H+mod+1);
 		
+		ctx.stroke();
+	}
+	if(obj.img=="rect_line") {
+		obj.H=obj.rows;
+		obj.W=obj.cols;
+		var mod=0.1+0;
+		var mod2=0.5+0;
+		ctx.beginPath();
+		ctx.strokeStyle = 'rgb(255,0,0)';
+		ctx.lineWidth=2;
+		ctx.setLineDash([1, 1]);
+		ctx.moveTo(obj.X+mod2,obj.Y+mod2);
+		ctx.lineTo(obj.X+obj.W+mod2,obj.Y+obj.H+mod2);
 		ctx.stroke();
 	}
 }
@@ -598,7 +628,7 @@ function selectTheNotes(pooki) {
 		}
 	}
 }
-
+var chosenVoice=1;
 function newTool(X,Y,func,framey,imgey) {
 	
 	var btn=newButton(X,Y,2,1,"tool_button.png");
@@ -613,6 +643,7 @@ function newTool(X,Y,func,framey,imgey) {
 	pianoRollTools.push(btn.gfx);
 	pianoRollTools.push(btn.symbo);
 	btn.additionalFunc = function(){};
+	btn.clickOnce=function(){};
 	btn.preRender = function() {
 		if(this.func=="play"&&isSpacePressed) {
 			this.onClick();
@@ -633,9 +664,27 @@ function newTool(X,Y,func,framey,imgey) {
 			isPlaying=false;
 			stopAllNotes();
 		}
+		if(this.func=="counterpointCheck") {
+			for(var i=0;i<mistakies.length;i++) {
+				mistakies[i].kill();
+			}
+			mistakies=[];
+		}
+	}
+	btn.clickWhileClicked = function() {
+		if(this.func.indexOf("voice")==0) {
+			var num=Number(this.func.split(":")[1]);
+			for(var i=0;i<objects.length;i++) {
+				var objy=objects[i];
+				if(objy.note_selected==true) {
+					objy.voice=num;
+				}
+			}
+		}
 	}
 	btn.onClick = function() {
 		if(this.selsel==true&&this.func!="play") {
+			this.clickWhileClicked();
 			return;
 		}
 		cursorObject.img=imgey;
@@ -679,9 +728,145 @@ function newTool(X,Y,func,framey,imgey) {
 			this.selsel=false;
 			this.additionalFunc();
 		}
+		//voice:num
+		if(f.indexOf("voice")==0) {
+			var num=Number(f.split(":")[1]);
+			chosenVoice=num;
+			this.the_tool.onClick();
+			this.clickWhileClicked();
+		}
+		if(f=="counterpointCheck") {
+			cursorObject.cursor_state="mistakes";
+			counterpointCheck(this);
+		}
 	}
 	return btn;
 }
+
+function counterpointCheck(tooly) {
+	var noties=[];
+	noties["vocci1"]=[];
+	noties["vocci1"].namey="soprano";
+	noties["vocci1"].miny=0+12*4;
+	noties["vocci1"].maxy=0+12*7;
+	noties["vocci2"]=[];
+	noties["vocci2"].namey="alto";
+	noties["vocci2"].miny=7+12*3;
+	noties["vocci2"].maxy=7+12*5;
+	noties["vocci3"]=[];
+	noties["vocci3"].namey="tenor";
+	noties["vocci3"].miny=0+12*3;
+	noties["vocci3"].maxy=0+12*5;
+	noties["vocci4"]=[];
+	noties["vocci4"].namey="bass";
+	noties["vocci4"].miny=4+12*2;
+	noties["vocci4"].maxy=0+12*4;
+	for(var i=0;i<objects.length;i++) {
+		if(objects[i].isNote==true) {
+			noties.push(objects[i]);
+			noties["vocci"+objects[i].voice].push(objects[i]);
+		}
+	}
+	for(var i=1;i<=4;i++) {
+		var arr=noties["vocci"+i];
+		for(var j=0;j<arr.length;j++) {
+			var n1=arr[j];
+			var headstart=9+12*1;
+			if(n1.pitch+headstart>arr.maxy||n1.pitch+headstart<arr.miny) {
+				alert("The "+arr.namey+" voice goes out of range.");
+				return;
+			}
+			for(var z=0;z<arr.length;z++) {
+				if(j!=z) {
+					var n2=arr[z];
+					if(!(n1.start+1>n2.start+n2.length)&&!(n2.start+1>n1.start+n1.length)) {
+						tooly.the_tool.onClick();
+						alert("The "+arr.namey+" voice overlaps itself.");
+						return;
+					}
+				}
+			}
+		}
+	}
+	noties["vocci1"]=organizeNotes(noties["vocci1"]);
+	noties["vocci2"]=organizeNotes(noties["vocci2"]);
+	noties["vocci3"]=organizeNotes(noties["vocci3"]);
+	noties["vocci4"]=organizeNotes(noties["vocci4"]);
+	var checks=[];
+	for(var vn1=1;vn1<=4;vn1++) {
+		var arr1=noties["vocci"+vn1];
+		for(var vn2=1;vn2<=4;vn2++) {
+			if(vn1!=vn2&&checks[vn1+"X"+vn2]!=true&&checks[vn2+"X"+vn1]!=true) {
+				checks[vn1+"X"+vn2]=true;
+				var arr2=noties["vocci"+vn2];
+				var prevNotes=[];
+				for(var i=0;i<arr1.length||i<arr2.length;i++) {
+					var n1=arr1[i];
+					var n2=arr2[i];
+					if(n1!=undefined&&n2!=undefined) {
+						if(prevNotes.length>0) {
+							var pn1=prevNotes[0];
+							var pn2=prevNotes[1];
+							var pd=getTheInterval(pn1,pn2);
+							var p=getTheInterval(n1,n2);
+							console.log(p+" "+pd);
+							if(p[1]=="strain"&&pd[1]=="strain") {
+								newMistakeLine(pn1,n1);
+								newMistakeLine(pn2,n2);
+								newMistakeLine(n1,n2);
+							}
+						}
+						prevNotes=[n1,n2];
+					}
+					
+				}
+			}
+		}
+	}
+}
+
+function getTheInterval(n1,n2) {
+	var interval=["unison","strain"];
+	var diff=Math.max(n1.pitch,n2.pitch)-Math.min(n1.pitch,n2.pitch);
+	diff%=12;
+	if(diff==0) {
+		interval[0]="unison";
+	}
+	if(diff==1||diff==2) {
+		interval[0]="2nd";
+	}
+	if(diff==3||diff==4) {
+		interval[0]="3rd";
+		interval[1]="nice";
+	}
+	if(diff==5) {
+		interval[0]="4th";
+	}
+	if(diff==6) {
+		interval[0]="tritone";
+	}
+	if(diff==7) {
+		interval[0]="5th";
+	}
+	if(diff==8||diff==9) {
+		interval[0]="6th";
+		interval[1]="nice";
+	}
+	if(diff==10||diff==11) {
+		interval[0]="7th";
+	}
+	return interval;
+}
+
+function organizeNotes(arr) {
+	var arr2=[];
+	for(var i=0;i<arr.length;i++) {
+		var notey=arr[i];
+		arr2[notey.start]=notey;
+	}
+	return arr2;
+}
+
 function mainMenu() {
 	clearMenu();
 	var i=0;
@@ -1079,7 +1264,7 @@ function pianoRoll() {
 		if((selected_object==undefined||selected_object==dummy_obj)) {
 			if(cursorObject.cursor_state=="write") {
 				selectTheNotes("lol");
-				var n1=newNote(0,0,note_last_length,0);
+				var n1=newNote(0,0,note_last_length,chosenVoice);
 				n1.selected_X=n1.X+1;
 				n1.selected_Y=n1.Y+1;
 				n1.selected_W=100;
@@ -1125,9 +1310,27 @@ function pianoRoll() {
 		}
 	}
 	var T1=newTool(0,50,"write",0,"cursor_pen.png");
-	var T2=newTool(27,50,"select",7,"cursor.png");
-	var T3=newTool(0,78,"play",3,"cursor_load.png");
+	var T2=newTool(0+27,50,"select",7,"cursor.png");
+	var T3=newTool(0,50+28,"play",3,"cursor_load.png");
 	
+	var T4=newTool(0+27+27,50,"voice:1",4,"");
+	T4.groupy=2;
+	T4.the_tool=T1;
+	tools["voice1"]=T4;
+	var T5=newTool(0+27+27,50+28,"voice:2",9,"");
+	T5.groupy=2;
+	T5.the_tool=T1;
+	tools["voice2"]=T5;
+	var T6=newTool(0+27+27,50+28+28,"voice:3",14,"");
+	T6.groupy=2;
+	T6.the_tool=T1;
+	tools["voice3"]=T6;
+	var T7=newTool(0+27+27,50+28+28+28,"voice:4",19,"");
+	T7.groupy=2;
+	T7.the_tool=T1;
+	tools["voice4"]=T7;
+	var T8=newTool(0+27,50+28,"counterpointCheck",2,"cursor_mistakes.png");
+	T8.the_tool=T1;
 	T3.goto=T1;
 	for(var i=0;i<pianoRollTools.length;i++) {
 		pianoRollTools[i].pushForward();
@@ -1243,10 +1446,20 @@ function newNote(start,pitch,length,voice) {
 				}
 			}
 		}
-		note_last_length=this.length;
+		if(this.note_selected==false) {
+			note_last_length=this.length;
+			chosenVoice=this.voice;
+			tools["voice"+this.voice].onClick();
+		}
 	}
 	btn.note_name=note_namey;
 	
+	pushAll();
+	
+	return btn;
+}
+
+function pushAll() {
 	for(var i=0;i<pianos.length;i++) {
 		pianos[i].pushForward();
 		pianos[i].note_namey.pushForward();
@@ -1269,8 +1482,22 @@ function newNote(start,pitch,length,voice) {
 	for(var i=0;i<pianoRollTools.length;i++) {
 		pianoRollTools[i].pushForward();
 	}
-	return btn;
 }
+var mistakies=[];
+function newMistakeLine(note1,note2) {
+	var mistakey=newObject(0,0,0,0,"rect_line");
+	mistakey.note1=note1;
+	mistakey.note2=note2;
+	mistakey.preRender = function() {
+		this.X=this.note1.X+4;
+		this.Y=this.note1.Y+4;
+		this.cols=this.note2.X-this.note1.X;
+		this.rows=this.note2.Y-this.note1.Y;
+	}
+	mistakies.push(mistakey);
+	pushAll();
+}
+
 function setUpCursor() {
 	cursorObject=newObject(0,0,1,1,"cursor.png");
 	cursorObject.preRender=function() {
