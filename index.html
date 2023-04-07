@@ -665,10 +665,11 @@ function newTool(X,Y,func,framey,imgey) {
 			stopAllNotes();
 		}
 		if(this.func=="counterpointCheck") {
-			for(var i=0;i<mistakies.length;i++) {
-				mistakies[i].kill();
+			for(var i=0;i<objects.length;i++) {
+				if(objects[i].isMistake==true) {
+					objects[i].kill();
+				}
 			}
-			mistakies=[];
 		}
 	}
 	btn.clickWhileClicked = function() {
@@ -809,8 +810,10 @@ function counterpointCheck(tooly) {
 							var pn2=prevNotes[1];
 							var pd=getTheInterval(pn1,pn2);
 							var p=getTheInterval(n1,n2);
-							console.log(p+" "+pd);
-							if(p[1]=="strain"&&pd[1]=="strain") {
+							var motion=getMotion(pn1,pn2,n1,n2);
+							console.log(p+" "+pd+" "+motion);
+							if((p[1]=="strain"&&pd[1]=="strain")||
+							(motion=="direct"&&p[2]=="consonance"&&p[1]=="strain")) {
 								newMistakeLine(pn1,n1);
 								newMistakeLine(pn2,n2);
 								newMistakeLine(n1,n2);
@@ -824,36 +827,68 @@ function counterpointCheck(tooly) {
 		}
 	}
 }
-
+function getMotion(pn1,pn2,n1,n2) {
+	var m="contrary";
+	var dir1=pn1.pitch-n1.pitch;
+	var dir2=pn2.pitch-n2.pitch;
+	if(dir1!=0) {
+		dir1/=Math.abs(dir1);
+	}
+	if(dir2!=0) {
+		dir2/=Math.abs(dir2);
+	}
+	if(dir1==dir2) {
+		m="direct";
+	} else {
+		if(dir1==0||dir2==0) {
+			m="oblique";
+		}
+	}
+	return m;
+}
 function getTheInterval(n1,n2) {
-	var interval=["unison","strain"];
+	var interval=["unison","strain","consonance"];
 	var diff=Math.max(n1.pitch,n2.pitch)-Math.min(n1.pitch,n2.pitch);
 	diff%=12;
 	if(diff==0) {
 		interval[0]="unison";
+		interval[1]="strain";
+		interval[2]="consonance";
 	}
 	if(diff==1||diff==2) {
 		interval[0]="2nd";
+		interval[1]="strain";
+		interval[2]="dissonance";
 	}
 	if(diff==3||diff==4) {
 		interval[0]="3rd";
 		interval[1]="nice";
+		interval[2]="consonance";
 	}
 	if(diff==5) {
 		interval[0]="4th";
+		interval[1]="strain";
+		interval[2]="consonant-dissonance";
 	}
 	if(diff==6) {
 		interval[0]="tritone";
+		interval[1]="strain";
+		interval[2]="dissonance";
 	}
 	if(diff==7) {
 		interval[0]="5th";
+		interval[1]="strain";
+		interval[2]="consonance";
 	}
 	if(diff==8||diff==9) {
 		interval[0]="6th";
 		interval[1]="nice";
+		interval[2]="consonance";
 	}
 	if(diff==10||diff==11) {
 		interval[0]="7th";
+		interval[1]="strain";
+		interval[2]="dissonance";
 	}
 	return interval;
 }
@@ -1494,8 +1529,10 @@ function newMistakeLine(note1,note2) {
 		this.cols=this.note2.X-this.note1.X;
 		this.rows=this.note2.Y-this.note1.Y;
 	}
-	mistakies.push(mistakey);
+	mistakey.isMistake=true;
 	pushAll();
+	cleanObjects();
+	return mistakey;
 }
 
 function setUpCursor() {
@@ -1521,6 +1558,23 @@ var wasMouseClicking=false;
 var tempoCounter=0;
 var tempo=70;
 var wasPlaying=false;
+
+function cleanObjects() {
+	var arr2=[];
+	console.log("Cleaning up list ("+objects.length+")");
+	for(var i=0;i<objects.length;i++) {
+		if(objects[i]==undefined) {
+			//nothin
+		} else {
+			arr2.push(objects[i]);
+			objects[i].ID=arr2.length-1;
+		}
+	}
+	objects=arr2;
+	console.log("*");
+	console.log("Finished clean up ("+objects.length+")");
+}
+
 const interval = setInterval(function() {
 	if(!wasMouseClicking&&isMouseClicking) {
 		isMouseGoDown=true;
@@ -1534,6 +1588,7 @@ const interval = setInterval(function() {
             renderObject(objects[i]);
         } else {
 			there_was_undefined=true;
+			console.log("Objects "+i+" was deleted");
 		}
     }
 	if(hovered_object!=undefined) {
@@ -1551,13 +1606,8 @@ const interval = setInterval(function() {
 		}
 	}
 	
-	for(var i=0;i<objects.length&&there_was_undefined==true;i++) {
-		if(objects[i]==undefined) {
-			objects.splice(i,1);
-			i--;
-		} else {
-			objects[i].ID=i;
-		}
+	if(there_was_undefined) {
+		cleanObjects();
 	}
 	isMouseGoDown=false;
 	if(isDeletePressed) {
