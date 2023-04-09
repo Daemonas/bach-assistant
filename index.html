@@ -124,6 +124,7 @@ function orderNotesToEvents(starty) {
 var hovered_object=[];
 hovered_object.whenClick=function(){};
 hovered_object.onClick=function(){};
+hovered_object.ID=-1;
 var dummy_obj=[];
 dummy_obj.whileSelected=function(){};
 var selected_object=dummy_obj;
@@ -213,15 +214,14 @@ function clicky(event) {
 		isRightMB = e.button == 2;
 	}
 	//alert(mouseX+" "+mouseY);
-	if(hovered_object!=undefined) {
-		if(hovered_object.is_hover&&!isRightMB) {
-			hovered_object.whenClick();
-		}
+	if(!isRightMB) {
+		//isMouseReleased=true;
 	}
 }
 var isMouseClicking=false;
 var isMouseGoDown=false;
 var isRightClickDown=false;
+var isMouseReleased=false;
 function mousy(event) {
 	var e=event;
 	var isRightMB=false;
@@ -241,13 +241,9 @@ function mouseouty(event) {
 }
 
 function mousyup(event) {
-	if(hovered_object!=undefined) {
-		if(isMouseClicking==true) {
-			hovered_object.whenClick();
-		}
-	}
 	isMouseClicking=false;
 	isRightClickDown=false;
+	isMouseReleased=true;
 }
 
 function squaresTouch(X1,Y1,W1,H1,X2,Y2,W2,H2) {
@@ -452,7 +448,7 @@ function newButton(X,Y,cols,rows,img) {
     var objy=newObject(X,Y,cols,rows,img);
     objy.hover=function() {
 		var phony=mobileAndTabletCheck();
-        if(mouseX>=this.X&&mouseX<=this.W+this.X&&mouseY>=this.Y&&mouseY<=this.H+this.Y&&(!phony||phony&&isMouseClicking)) {
+        if(mouseX>=this.X&&mouseX<=this.W+this.X&&mouseY>=this.Y&&mouseY<=this.H+this.Y) {
             this.frame=1;
 			if(cols<=1&&rows<=1) {
 				this.frame=0;
@@ -460,6 +456,7 @@ function newButton(X,Y,cols,rows,img) {
 			if(this.hoverable==true) {
 				hovered_object=this;
 				this.is_hover=true;
+				
 			}
 			var bullshitfuck=false;
 			if(selected_object!=undefined) {
@@ -482,7 +479,7 @@ function newButton(X,Y,cols,rows,img) {
 						this.selected_W=this.W;
 						this.selected_H=this.H;
 					}
-				} else if(!isMouseClicking){
+				} else if(!isMouseClicking&&!isMouseReleased){
 					if(selected_object==this) {
 						this.unselectedMoment();
 					}
@@ -494,7 +491,7 @@ function newButton(X,Y,cols,rows,img) {
         } else {
             this.frame=0;
 			this.is_hover=false;
-			if(!isMouseClicking&&selected_object==this) {
+			if(!isMouseReleased&&!isMouseClicking&&selected_object==this) {
 				this.unselectedMoment();
 				selected_object=undefined;
 				this.is_selected=false;
@@ -907,12 +904,14 @@ function mainMenu() {
 	var i=0;
 	newObject(0,0,1,1,"menu_background.png");
 	var b1=newButton(10,10+i*40,1,1,"menu_button.png");
+	b1.forDrag=true;
 	b1.whenClick = function() {
 		pianoRoll();
 	}
 	newText(13,13,"piano roll");
 	i++;
 	var b2=newButton(10,10+i*30,1,1,"menu_button.png");
+	b2.forDrag=true;
 	b2.whenClick = function() {
 		chordMenu();
 	}
@@ -927,6 +926,7 @@ function chordMenu() {
 	tools=[];
 	newObject(0,0,1,1,"menu_back_chords.png");
 	var exitbtn=newButton(0,351,1,2,"button.png");
+	exitbtn.forDrag=true;
 	exitbtn.whenClick = function() {
 		mainMenu();
 	}
@@ -945,7 +945,7 @@ function chordMenu() {
 		btn.gfx=gfx;
 		btn.PID=i;
 		btn.isVisible=false;
-		btn.whenClick = function() {
+		btn.onClick = function() {
 			pickedTonic=this;
 			if(isChordsPlaying==false) {
 				stopAllNotes();
@@ -1071,14 +1071,14 @@ function chordMenu() {
 			progressions.push([[1,3,5],["0b",2,5],[-1,1,4],[0,4,5]]);//I v IV V7
 			progressions.push([[1,3,5],[1,4,"6b"],[0,2,5],[1,3,5]]);//I iv V I
 			progressions.push([[1,3,5],[1,"4#",6],[2,5,7],[3,5,8]]);//I Idim7 V I
-			progressions.push([[1,3,5],["1#",3,6],[2,4,6],[0,2,5]]);//I VI ii V
+			progressions.push([[1,3,5],["1#",3,6],[2,4,6],[2,5,7]]);//I VI ii V
 			progressions.push([[1,3,5],[0,"3b","5b"],[-1,2,4],[-2,2,4]]);//I VII ii V
 		} else {
 			progressions.push([[1,3,5],[0,2,4],[-1,1,3],[-2,"0#",2]]);//i VII VI V
 			progressions.push([[1,3,5],[1,4,6],["0#",2,5],[1,3,5]]);//i iv V i
 			progressions.push([[1,3,5],[2,"4#","6#"],[2,5,"7#"],[3,5,8]]);//i II V i
 			progressions.push([[1,3,5],["-1#",1,4],["0#",2,5],[1,3,5]]);//i IV V i
-			progressions.push([[1,3,5],["1#",4,6],["0#",2,5],[1,3,5]]);//i I# V i
+			progressions.push([[1,3,5],["1#",4,6],[2,5,7],[3,5,8]]);//i I# V i
 		}
 		this.currentProgression=randomFromArray(progressions);
 		this.timey=40;
@@ -1264,6 +1264,7 @@ function pianoRoll() {
 		}
 	}
 	var exitbtn=newButton(0,0,1,2,"button.png");
+	exitbtn.forDrag=true;
 	exitbtn.whenClick = function() {
 		mainMenu();
 	}
@@ -1332,7 +1333,7 @@ function pianoRoll() {
 					}
 					this.lastMouseyX=mouseX;
 					this.lastMouseyY=mouseY;
-					if(!isMouseClicking) {
+					if(!isMouseClicking&&!isMouseReleased) {
 						if(selected_object==this) {
 							selected_object=undefined;
 						}
@@ -1582,6 +1583,7 @@ const interval = setInterval(function() {
 	wasMouseClicking=isMouseClicking;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 	var there_was_undefined=false;
+	hovered_object=undefined;
     for(var i=0;i<objects.length;i++) {
         if(objects[i]!=undefined) {
             objects[i].hover();
@@ -1597,6 +1599,11 @@ const interval = setInterval(function() {
 			if(isMouseGoDown==true) {
 				hovered_object.onClick();
 			}
+		}
+	}
+	if(hovered_object!=undefined&&selected_object!=undefined) {
+		if(isMouseReleased==true&&hovered_object==selected_object) {
+			hovered_object.whenClick();
 		}
 	}
 	
@@ -1665,6 +1672,7 @@ const interval = setInterval(function() {
 		}
 	}
 	isSpacePressed=false;
+	isMouseReleased=false;
 },20)
 
 </script>
