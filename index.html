@@ -674,8 +674,10 @@ function newTool(X,Y,func,framey,imgey) {
 			var num=Number(this.func.split(":")[1]);
 			for(var i=0;i<objects.length;i++) {
 				var objy=objects[i];
-				if(objy.note_selected==true) {
-					objy.voice=num;
+				if(objy!=undefined) {
+					if(objy.note_selected==true) {
+						objy.voice=num;
+					}
 				}
 			}
 		}
@@ -730,7 +732,9 @@ function newTool(X,Y,func,framey,imgey) {
 		if(f.indexOf("voice")==0) {
 			var num=Number(f.split(":")[1]);
 			chosenVoice=num;
-			this.the_tool.onClick();
+			if(tools["selection"].selsel!=true) {
+				this.the_tool.onClick();
+			}
 			this.clickWhileClicked();
 		}
 		if(f=="counterpointCheck") {
@@ -770,7 +774,7 @@ function counterpointCheck(tooly) {
 		for(var j=0;j<arr.length;j++) {
 			var n1=arr[j];
 			var headstart=9+12*1;
-			if(n1.pitch+headstart>arr.maxy||n1.pitch+headstart<arr.miny) {
+			if((n1.pitch+headstart>arr.maxy||n1.pitch+headstart<arr.miny)&&false) {
 				alert("The "+arr.namey+" voice goes out of range.");
 				return;
 			}
@@ -1347,6 +1351,7 @@ function pianoRoll() {
 	}
 	var T1=newTool(0,50,"write",0,"cursor_pen.png");
 	var T2=newTool(0+27,50,"select",7,"cursor.png");
+	tools["selection"]=T2;
 	var T3=newTool(0,50+28,"play",3,"cursor_load.png");
 	
 	var T4=newTool(0+27+27,50,"voice:1",4,"");
@@ -1386,9 +1391,12 @@ function newNote(start,pitch,length,voice) {
 	btn.note_numy=newObject(btn.X+50,btn.Y,5,3,"small_numbers.png");
 	btn.unselectedMoment=function() {
 		sound_notes["note"+(this.pitch+1)].sF.decay=true;
+		this.modey="none";
 	}
 	btn.onClick=function() {
-		sound_notes["note"+(this.pitch+1)].playNote();
+		if(this.note_selected!=true&&this.modey!="stretchy") {
+			sound_notes["note"+(this.pitch+1)].playNote();
+		}
 	}
 	btn.preRender=function() {
 		this.X=132+Math.floor((this.start+noteScrollX)/15*zoom);
@@ -1426,8 +1434,11 @@ function newNote(start,pitch,length,voice) {
 	btn.moveType=function(sel_X,sel_W,sel_mouseX) {
 		return sel_mouseX<=sel_X+sel_W-6;
 	}
+	btn.modey="none";
 	btn.whileSelected=function() {
+		this.modey="stretchy";
 		if(this.moveType(this.selected_X,this.selected_W,this.selected_mouseX)) {
+			this.modey="movey";
 			var wasStart=this.start;
 			var wasPitch=this.pitch;
 			var minX1=0;
@@ -1482,7 +1493,7 @@ function newNote(start,pitch,length,voice) {
 				}
 			}
 		}
-		if(this.note_selected==false) {
+		if(this.note_selected!=true) {
 			note_last_length=this.length;
 			chosenVoice=this.voice;
 			tools["voice"+this.voice].onClick();
