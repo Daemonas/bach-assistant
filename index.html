@@ -142,28 +142,9 @@ var isShiftPressed=false;
 var isSpacePressed=false;
 var isSpacePressedCur=false;
 var ctrlA=false;
-
+var scrollEventDelta=0;
 document.addEventListener("wheel", function(event) {
-	if(timelineBar!=undefined) {
-		if(timelineBar.is_hover==false) {
-			dragbarH.symbo.Y+=Math.round(event.deltaY/10);
-			dragbarH.scrolly();
-		} else {
-			var goobi=Math.abs(event.deltaY)/event.deltaY;
-			zoom-=goobi;
-			if(zoom<2) {
-				zoom=2;
-			}
-			if(zoom>30) {
-				zoom=30;
-			}
-			dragbarW.symbo.X=(noteScrollX)*((timelineLength-102))/-855+102+goobi;
-			if(dragbarW.symbo.X<102) {
-				dragbarW.symbo.X=102;
-			}
-			noteScrollX=Math.ceil(-855*((this.symbo.X-102)/((timelineLength-102))));
-		}
-	}
+	scrollEventDelta=event.deltaY;
 });
 
 document.addEventListener('keydown', function(event) {
@@ -1623,11 +1604,27 @@ const interval = setInterval(function() {
 			selected_object.whileSelected();
 		}
 	}
-	
-	if(there_was_undefined) {
-		cleanObjects();
+	if(timelineBar!=undefined&&scrollEventDelta!=0) {
+		if(timelineBar.is_hover==false) {
+			dragbarH.symbo.Y+=Math.round(scrollEventDelta/10);
+			dragbarH.scrolly();
+		} else {
+			var goobi=Math.abs(scrollEventDelta)/scrollEventDelta;
+			zoom-=goobi;
+			if(zoom<2) {
+				zoom=2;
+			}
+			if(zoom>30) {
+				zoom=30;
+			}
+			dragbarW.symbo.X=(noteScrollX)*((timelineLength-102))/-855+102+goobi;
+			if(dragbarW.symbo.X<102) {
+				dragbarW.symbo.X=102;
+			}
+			//noteScrollX=Math.ceil(-855*((dragbarW.symbo.X-102)/((timelineLength-102))));
+		}
 	}
-	isMouseGoDown=false;
+	scrollEventDelta=0;
 	if(isDeletePressed) {
 		for(var i=0;i<objects.length;i++) {
 			if(objects[i]!=undefined) {
@@ -1639,6 +1636,10 @@ const interval = setInterval(function() {
 			}
 		}
 	}
+	if(there_was_undefined) {
+		cleanObjects();
+	}
+	isMouseGoDown=false;
 	isDeletePressed=false;
 	var maxtempocount=Math.floor((70/tempo)*5);
 	if(isPlaying) {
