@@ -483,13 +483,16 @@ function newButton(X,Y,cols,rows,img) {
     return objy;
 }
 
-function newText(X,Y,text) {
+function newText(X,Y,text,actuallyWhite) {
 	var l=0;
 	var arr=[];
 	var TX=X;
 	for(var i=0;i<text.length;i++) {
 		var bullshit=97;
 		var piccy="text.png";
+		if(actuallyWhite==true) {
+			piccy="text2.png";
+		}
 		if(text.charCodeAt(i)>=48&&text.charCodeAt(i)<=48+9) {
 			bullshit=48;
 			piccy="numbers.png";
@@ -500,8 +503,7 @@ function newText(X,Y,text) {
 			piccy="signs.png";
 		}
 		if(text.charAt(i)==':') {
-			cc=1;
-			piccy="signs.png";
+			cc=26;
 		}
 		if(text.charAt(i)!=' '&&text.charAt(i)!='|') {
 			var RR=10;
@@ -883,7 +885,7 @@ function organizeNotes(arr) {
 	}
 	return arr2;
 }
-
+var chordDiff=1;
 function mainMenu() {
 	clearMenu();
 	var i=0;
@@ -898,9 +900,34 @@ function mainMenu() {
 	var b2=newButton(10,10+i*30,1,1,"menu_button.png");
 	b2.forDrag=true;
 	b2.whenClick = function() {
+		chordDiff=0;
 		chordMenu();
 	}
-	newText(13,13+i*30,"chords scales");
+	newText(13,13+i*30,"chords scales o");
+	i++;
+	var b2=newButton(10,10+i*30,1,1,"menu_button.png");
+	b2.forDrag=true;
+	b2.whenClick = function() {
+		chordDiff=1;
+		chordMenu();
+	}
+	newText(13,13+i*30,"chords scales i");
+	i++;
+	var b3=newButton(10,10+i*30,1,1,"menu_button.png");
+	b3.forDrag=true;
+	b3.whenClick = function() {
+		chordDiff=2;
+		chordMenu();
+	}
+	newText(13,13+i*30,"chords scales ii");
+	i++;
+	var b4=newButton(10,10+i*30,1,1,"menu_button.png");
+	b4.forDrag=true;
+	b4.whenClick = function() {
+		chordDiff=3;
+		chordMenu();
+	}
+	newText(13,13+i*30,"chords scales iii");
 }
 var pickedTonic=[];
 var isChordsPlaying=false;
@@ -957,6 +984,8 @@ function chordMenu() {
 	chordPlayer.points=0;
 	chordPlayer.points2=0;
 	chordPlayer.stary=newObject(430,351,1,1,"star.png");
+	var diffs=["very easy","easy","medium","hard"];
+	newText(400-40,390-5,"difficulty: "+diffs[chordDiff]+"",true);
 	chordPlayer.stary.chordPlayer=chordPlayer;
 	chordPlayer.stary.score=[];
 	chordPlayer.stary.score.kill=function(){};
@@ -1044,26 +1073,41 @@ function chordMenu() {
 		}
 		var progressions=[];
 		progressions.push([[1,3,5],[1,4,6],[0,2,5],[1,3,5]]);//I IV V I
-		progressions.push([[1,3,5],[1,4,6],[2,4,6],[0,2,5]]);//I IV ii V
-		progressions.push([[1,3,5],[1,4,6],[1,3,5],[0,2,5]]);//I IV I V
-		progressions.push([[1,3,5],[1,4,6],[3,5,7],[2,4,6]]);//I IV iii ii
-		progressions.push([[0,2,5],[1,3,5],[1,4,6],[2,5,7]]);//V I IV V
-		progressions.push([[1,3,5],[-1,1,3],[-3,-1,1],[-2,0,2]]);//I vi IV V
-		progressions.push([[-2,0,2],[-1,1,4],[0,2,5],[1,3,5]]);//V IV V I
-		progressions.push([[1,3,5],[0,2,4],[-1,1,3],[-2,0,2]]);//I viio vi V
+		if(chordDiff>=1) {
+			progressions.push([[1,3,5],[1,4,6],[2,4,6],[0,2,5]]);//I IV ii V
+			progressions.push([[1,3,5],[1,4,6],[1,3,5],[0,2,5]]);//I IV I V
+			progressions.push([[1,3,5],[-1,1,3],[-3,-1,1],[-2,0,2]]);//I vi IV V
+			progressions.push([[1,3,5],[0,2,5],[1,4,5],[1,3,5]]);//I IV Isus I
+		}
+		if(chordDiff>=2) {
+			progressions.push([[-2,0,2],[-1,1,4],[0,2,5],[1,3,5]]);//V IV V I
+			progressions.push([[1,3,5],[1,4,6],[3,5,7],[2,4,6]]);//I IV iii ii
+			progressions.push([[0,2,5],[1,3,5],[1,4,6],[2,5,7]]);//V I IV V
+			progressions.push([[1,3,5],[0,2,4],[-1,1,3],[-2,0,2]]);//I viio vi V
+		}
+		
 		if(this.majmin=="major") {
-			progressions.push([[-2,1,3],["0b",1,3],[-1,1,4],[0,2,5]]);//I I7 IV V
-			progressions.push([[1,3,5],["0b",2,5],[-1,1,4],[0,4,5]]);//I v IV V7
-			progressions.push([[1,3,5],[1,4,"6b"],[0,2,5],[1,3,5]]);//I iv V I
-			progressions.push([[1,3,5],[1,"4#",6],[2,5,7],[3,5,8]]);//I Idim7 V I
-			progressions.push([[1,3,5],["1#",3,6],[2,4,6],[2,5,7]]);//I VI ii V
-			progressions.push([[1,3,5],[0,"3b","5b"],[-1,2,4],[-2,2,4]]);//I VII ii V
+			if(chordDiff>=2) {
+				progressions.push([[-2,1,3],["0b",1,3],[-1,1,4],[0,2,5]]);//I I7 IV V
+				progressions.push([[1,3,5],["1#",3,6],[2,4,6],[2,5,7]]);//I VI ii V
+			}
+			if(chordDiff>=3) {
+				progressions.push([[1,3,5],["0b",2,5],[-1,1,4],[0,4,5]]);//I v IV V7
+				progressions.push([[1,3,5],[1,4,"6b"],[0,2,5],[1,3,5]]);//I iv V I
+				progressions.push([[1,3,5],[1,"4#",6],[2,5,7],[3,5,8]]);//I Idim7 V I
+				progressions.push([[1,3,5],[0,"3b","5b"],[-1,2,4],[-2,2,4]]);//I VII ii V
+			}
 		} else {
-			progressions.push([[1,3,5],[0,2,4],[-1,1,3],[-2,"0#",2]]);//i VII VI V
-			progressions.push([[1,3,5],[1,4,6],["0#",2,5],[1,3,5]]);//i iv V i
-			progressions.push([[1,3,5],[2,"4#","6#"],[2,5,"7#"],[3,5,8]]);//i II V i
-			progressions.push([[1,3,5],["-1#",1,4],["0#",2,5],[1,3,5]]);//i IV V i
-			progressions.push([[1,3,5],["1#",4,6],[2,5,7],[3,5,8]]);//i I# V i
+			if(chordDiff>=2) {
+				progressions.push([[1,3,5],[0,2,4],[-1,1,3],[-2,"0#",2]]);//i VII VI V
+				progressions.push([[1,3,5],[1,4,6],["0#",2,5],[1,3,5]]);//i iv V i
+				progressions.push([[1,3,5],["-1#",1,4],["0#",2,5],[1,3,5]]);//i IV V i
+				progressions.push([[1,3,5],["-1#",1,4],[1,3,5],["0#",2,5]]);//i IV i V
+			}
+			if(chordDiff>=3) {
+				progressions.push([[1,3,5],["1#",4,6],[2,5,7],[3,5,8]]);//i I# V i
+				progressions.push([[1,3,5],[2,"4#","6#"],[2,5,"7#"],[3,5,8]]);//i II V i
+			}
 		}
 		this.currentProgression=randomFromArray(progressions);
 		this.timey=40;
