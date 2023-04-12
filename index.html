@@ -1125,6 +1125,9 @@ function chordMenu() {
 		}
 		this.currentProgression=randomFromArray(progressions);
 		this.timey=40;
+		if(chordDiff=="-1") {
+			this.timey=80;
+		}
 		this.timer=this.timey;
 		this.curChord=0;
 		this.wereChordsPlaying=isChordsPlaying;
