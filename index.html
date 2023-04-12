@@ -900,6 +900,14 @@ function mainMenu() {
 	var b2=newButton(10,10+i*30,1,1,"menu_button.png");
 	b2.forDrag=true;
 	b2.whenClick = function() {
+		chordDiff="-1";
+		chordMenu();
+	}
+	newText(13,13+i*30,"find chord root");
+	i++;
+	var b2=newButton(10,10+i*30,1,1,"menu_button.png");
+	b2.forDrag=true;
+	b2.whenClick = function() {
 		chordDiff=0;
 		chordMenu();
 	}
@@ -985,6 +993,7 @@ function chordMenu() {
 	chordPlayer.points2=0;
 	chordPlayer.stary=newObject(430,351,1,1,"star.png");
 	var diffs=["very easy","easy","medium","hard"];
+	diffs["-1"]="chord root";
 	newText(400-40,390-5,"difficulty: "+diffs[chordDiff]+"",true);
 	chordPlayer.stary.chordPlayer=chordPlayer;
 	chordPlayer.stary.score=[];
@@ -1072,7 +1081,12 @@ function chordMenu() {
 			this.the_scale[(i-8+2)+"b"]=numanuma-1;
 		}
 		var progressions=[];
-		progressions.push([[1,3,5],[1,4,6],[0,2,5],[1,3,5]]);//I IV V I
+		if(chordDiff=="-1") {
+			progressions.push([[1,3,5]]);//I
+		}
+		if(chordDiff>=0) {
+			progressions.push([[1,3,5],[1,4,6],[0,2,5],[1,3,5]]);//I IV V I
+		}
 		if(chordDiff>=1) {
 			progressions.push([[1,3,5],[1,4,6],[2,4,6],[0,2,5]]);//I IV ii V
 			progressions.push([[1,3,5],[1,4,6],[1,3,5],[0,2,5]]);//I IV I V
