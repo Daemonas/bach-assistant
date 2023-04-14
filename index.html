@@ -939,6 +939,80 @@ function mainMenu() {
 }
 var pickedTonic=[];
 var isChordsPlaying=false;
+var chordScores=[];
+function setChordScores(wordy) {
+	var n=0;
+	var lowesty=-1;
+	var lowesty_n=-1;
+	var lowesty_labey="";
+	var lowesty_params=[];
+	var mm=["major","minor"];
+	var ks=[0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0];
+	for(var j=0;j<3;j++) {
+		var cooki=0;
+		for(var m=0;m<2;m++) {
+			for(var i=0;i<12;i++) {
+				var x=(i*5)%12;
+				var k=ks[cooki];
+				cooki++;
+				var labey="chord_"+x+"_"+j+"_"+mm[k%2];
+				if(wordy==undefined||wordy=="get") {
+					if(localStorage.getItem(labey)==undefined) {
+						localStorage.setItem(labey,-1);
+					}
+					chordScores[n]=parseInt(localStorage.getItem(labey));
+					chordScores[labey]=n;
+					chordScores["name_"+n]=labey;
+				}
+				if(wordy=="set") {
+					localStorage.setItem(labey,chordScores[n]);
+				}
+				if(wordy=="delete") {
+					localStorage.removeItem(labey);
+				}
+				if(wordy=="lowest"||wordy=="lowest_name") {
+					if(chordScores[n]==-1&&chordScores[n]<lowesty||chordScores[n]>lowesty&&lowesty!=-1||lowesty_n==-1) {
+						console.log(n+" "+(chordScores[n]==-1&&chordScores[n]<lowesty)+"||"+(chordScores[n]>lowesty&&lowesty!=-1)+"||"+(lowesty_n==-1))
+						lowesty=chordScores[n];
+						lowesty_n=n;
+						lowesty_labey=labey;
+						lowesty_params=[x,j,mm[k%2]];
+					}
+				}
+				n++;
+			}
+		}
+	}
+	if(wordy=="lowest") {
+		return lowesty_params;
+	}
+	if(wordy=="lowest_name") {
+		return lowesty_labey;
+	}
+}
+function updateChordScores() {
+	setChordScores("set");
+}
+function getLowestScoreChord() {
+	return setChordScores("lowest");
+}
+function getScore(the_time,the_mistakes) {
+	return (the_mistakes+1)*the_time;
+}
+function deleteScores() {
+	setChordScores("delete");
+}
+function scoreHasMinus() {
+	for(var i=0;i<chordScores.length;i++) {
+		if(chordScores[i]==-1) {
+			return true;
+		}
+	}
+	return false;
+}
+//deleteScores();
+setChordScores();
+console.log(chordScores);
 function chordMenu() {
 	clearMenu();
 	pickedTonic=[];
@@ -994,7 +1068,12 @@ function chordMenu() {
 	chordPlayer.stary=newObject(430,351,1,1,"star.png");
 	var diffs=["very easy","easy","medium","hard"];
 	diffs["-1"]="chord root";
-	newText(400-40,390-5,"difficulty: "+diffs[chordDiff]+"",true);
+	var diffdiffX=0;
+	if(scoreHasMinus()) {
+		diffs["-1"]="circle of fifths";
+		diffdiffX-=40;
+	}
+	var diffytext=newText(400-40+diffdiffX,390-5,"difficulty: "+diffs[chordDiff]+"",true);
 	chordPlayer.stary.chordPlayer=chordPlayer;
 	chordPlayer.stary.score=[];
 	chordPlayer.stary.score.kill=function(){};
@@ -1036,17 +1115,28 @@ function chordMenu() {
 				this.chordPlayer.stary.score.kill();
 				this.chordPlayer.stary.score=newText(this.chordPlayer.stary.X+17,353,""+this.chordPlayer.points);
 			}
-			this.chordPlayer.newLevel();
 			this.major_btn.selsel=false;
 			this.minor_btn.selsel=false;
+			if(chordDiff=="-1") {
+				var labey="chord_"+this.chordPlayer.the_tonic+"_"+this.chordPlayer.the_rotation+"_"+this.chordPlayer.majmin;
+				var nnn=chordScores[labey];
+				chordScores[nnn]=getScore(this.chordPlayer.solveTime,this.chordPlayer.currentMistakes);
+				console.log("Score for "+labey+": "+chordScores[nnn]);
+				if(chordDiff=="-1") {
+					updateChordScores();
+				}
+			}
+			this.chordPlayer.newLevel();
 			this.chordPlayer.tooly.onClick();
 		} else {
 			this.soundish2.currentTime=0;
 			this.soundish2.play();
 			this.chordPlayer.ruined=true;
+			this.chordPlayer.currentMistakes++;
 			var curmistake=pickedTonic.PID+"_"+this.major_btn.selsel;
 			if(curmistake!=this.chordPlayer.lastMistake) {
 				this.chordPlayer.points2++;
+				this.chordPlayer.currentMistakes++;
 				this.chordPlayer.stary2.score.kill();
 				this.chordPlayer.stary2.score=newText(this.chordPlayer.stary2.X+17,353,""+this.chordPlayer.points2);
 			}
@@ -1059,17 +1149,29 @@ function chordMenu() {
 		chordy.isVisible=false;
 	}
 	chordPlayer.newLevel = function() {
+		this.solveTime=0;
+		this.currentMistakes=0;
 		this.lastMistake="";
 		this.ruined=false;
 		var note_list=["c","c#","d","d#","e","f","f#","g","g#","a","a#","b"];
 		note_list.jumps_major=[0,2,4,5,7,9,11];
 		note_list.jumps_minor=[0,2,3,5,7,8,10];
 		this.majmin=randomFromArray(["major","minor"]);
-		var jumps=note_list["jumps_"+this.majmin];
 		this.major_btn.selsel=false;
 		this.minor_btn.selsel=false;
-		this.the_tonic=random(12);
+		this.the_tonic=random(12); 
 		this.the_scale=[];
+		var rotations=[[0,0,-12,0],[0,0,0,0],[12,0,0,0]];
+		this.the_rotation=randomFromArray([0,1,2]);
+		if(chordDiff=="-1"&&(!scoreHasMinus()&&randomFromArray([0,1])==0||scoreHasMinus())) {
+			console.log("Got chord based on difficulty")
+			var lowy=getLowestScoreChord();
+			this.the_tonic=lowy[0];
+			this.the_rotation=lowy[1];
+			this.majmin=lowy[2];
+		}
+		var jumps=note_list["jumps_"+this.majmin];
+		this.rotazia=rotations[this.the_rotation];
 		var addy=-12;
 		for(var i=0;i<22;i++) {
 			if(i%7==0) {
@@ -1126,16 +1228,17 @@ function chordMenu() {
 		this.currentProgression=randomFromArray(progressions);
 		this.timey=40;
 		if(chordDiff=="-1") {
-			this.timey=80;
+			this.timey=100;
 		}
 		this.timer=this.timey;
 		this.curChord=0;
 		this.wereChordsPlaying=isChordsPlaying;
-		this.rotazia=randomFromArray([[0,0,-12,0],[0,0,0,0],[12,0,0,0]]);
 		pickedTonic=[];
 		pickedTonic.PID=-1;
+		
 	}
 	chordPlayer.preRender = function() {
+		this.solveTime++;
 		if(!isChordsPlaying) {
 			this.timer=0;
 			this.curChord=0;
