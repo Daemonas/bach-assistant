@@ -44,7 +44,11 @@ function setupSounds(arr) {
 		arr["note"+i].sC=new Audio("piano/Stage Grand "+i+".mp3");
 		arr["note"+i].sD=new Audio("piano/Stage Grand "+i+".mp3");
 		arr["note"+i].sF=arr["note"+i].sA;
+		arr["note"+i].isForPlaying=false;
 		arr["note"+i].playNote = function() {
+			this.isForPlaying=true;
+		}
+		arr["note"+i].playNote2 = function() {
 			this.sF.decay=true;
 			if(this.sF==this.sA) {
 				this.sF=this.sB;
@@ -1834,6 +1838,10 @@ const interval = setInterval(function() {
 	}
 	wasPlaying=isPlaying;
 	for(var i=1;i<=88;i++) {
+		if(sound_notes["note"+i].isForPlaying==true) {
+			sound_notes["note"+i].isForPlaying=false;
+			sound_notes["note"+i].playNote2();
+		}
 		if(sound_notes["note"+i].sA.decay==true) {
 			sound_notes["note"+i].sA.volume*=decay_percentage;
 		}
