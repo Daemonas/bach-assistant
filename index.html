@@ -1170,10 +1170,13 @@ function chordMenu() {
 		if(chordDiff=="-1"&&(!scoreHasMinus()&&randomFromArray([0,1])==0||scoreHasMinus())) {
 			console.log("Got chord based on difficulty")
 			var lowy=getLowestScoreChord();
-			this.the_tonic=lowy[0];
-			this.the_rotation=lowy[1];
-			this.majmin=lowy[2];
+			if(this.former_tonic!=low[0]) {
+				this.the_tonic=lowy[0];
+				this.the_rotation=lowy[1];
+				this.majmin=lowy[2];
+			}
 		}
+		this.former_tonic=this.the_tonic;
 		var jumps=note_list["jumps_"+this.majmin];
 		this.rotazia=rotations[this.the_rotation];
 		var addy=-12;
