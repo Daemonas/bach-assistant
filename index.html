@@ -1170,7 +1170,7 @@ function chordMenu() {
 		if(chordDiff=="-1"&&(!scoreHasMinus()&&randomFromArray([0,1])==0||scoreHasMinus())) {
 			console.log("Got chord based on difficulty")
 			var lowy=getLowestScoreChord();
-			if(this.former_tonic!=low[0]) {
+			if(this.former_tonic!=lowy[0]) {
 				this.the_tonic=lowy[0];
 				this.the_rotation=lowy[1];
 				this.majmin=lowy[2];
